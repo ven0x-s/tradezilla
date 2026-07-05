@@ -94,33 +94,30 @@ rebuild. The Tradovate credentials file (`server/data/tradovate.json`) also pers
 
 `.github/workflows/docker-publish.yml` builds the image and pushes it to the GitHub
 Container Registry (ghcr.io) on every push to `main` (and on `v*` tags). The image is
-published as `ghcr.io/<your-username>/tradezilla:latest`.
+published as `ghcr.io/ven0x-s/tradezilla:latest` and the package is public, so it can be
+pulled directly with no login:
 
-First time only, make the image pullable by your NAS:
+```
+docker pull ghcr.io/ven0x-s/tradezilla:latest
+```
 
-1. Push the repo to GitHub. The Actions run builds and publishes the image.
-2. In GitHub, open your profile → Packages → `tradezilla` → Package settings. Set the
-   package visibility to Public (simplest), or keep it Private and log the NAS in with a
-   Personal Access Token that has `read:packages`.
-
-Then on the NAS, pull and run the prebuilt image instead of building locally:
+On the NAS (or any machine with Docker), run it with Compose instead of building locally:
 
 ```
 cd ~/tradezilla
-# edit docker-compose.ghcr.yml and replace OWNER with your github username (lowercase)
 sudo docker compose -f docker-compose.ghcr.yml pull
 sudo docker compose -f docker-compose.ghcr.yml up -d
 ```
 
-If the package is Private, first run (once):
-
-```
-echo <YOUR_PAT> | sudo docker login ghcr.io -u <your-username> --password-stdin
-```
-
-To update later, just `git push`; the workflow rebuilds the image, then on the NAS run the
-two `docker compose -f docker-compose.ghcr.yml pull` and `... up -d` commands again. Your
-mounted `data` folders (trades, screenshots, Tradovate credentials) are untouched.
+To update later, just `git push` to `main`; the workflow rebuilds and republishes the
+image (usually done within ~1-2 minutes — check the Actions tab on GitHub), then on the
+NAS run the two `docker compose -f docker-compose.ghcr.yml pull` and `... up -d` commands
+again. Your mounted `data` folders (trades, screenshots, Tradovate credentials, login
+accounts) are untouched.
 
 The workflow builds for `linux/amd64`, which matches Intel-based UGREEN NAS models. Add
 `linux/arm64` to the `platforms:` line if you run it on an ARM device.
+
+If you ever make the GitHub repo private, the GHCR package can be switched to private too
+(GitHub profile → Packages → `tradezilla` → Package settings) — then `docker login ghcr.io`
+with a Personal Access Token (`read:packages` scope) is required before pulling.

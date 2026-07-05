@@ -1,8 +1,7 @@
-# Run the pre-built image published by GitHub Actions (no building on the NAS).
-# Replace OWNER with your GitHub username (lowercase), e.g. ghcr.io/rickstijnman/tradezilla:latest
+# Run the pre-built image published by GitHub Actions (no building needed).
 services:
   tradezilla:
-    image: ghcr.io/OWNER/tradezilla:latest
+    image: ghcr.io/ven0x-s/tradezilla:latest
     container_name: tradezilla
     restart: unless-stopped
     pull_policy: always
