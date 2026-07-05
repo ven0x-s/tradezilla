@@ -1,0 +1,20 @@
+services:
+  tradezilla:
+    # BUILD ON THE NAS from this folder (no other computer needed):
+    build: .
+    # --- OR use a pre-imported image instead of building ---
+    # If you imported a tar image, comment out "build: ." above and
+    # uncomment the next line to run the imported image directly:
+    # image: tradezilla:latest
+    container_name: tradezilla
+    restart: unless-stopped
+    ports:
+      - "9088:3001"        # open http://<nas-ip>:9088  (change 9088 if taken)
+    volumes:
+      # Persist trades + screenshots on the NAS. Adjust the left side to a real
+      # share on your NAS. On UGOS Pro shares appear under /media, e.g.
+      #   /media/appdata/tradezilla/data
+      - ./data/trades:/app/server/data
+      - ./data/uploads:/app/server/uploads
+    environment:
+      - PORT=3001

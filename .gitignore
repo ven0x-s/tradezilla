@@ -1,0 +1,17 @@
+# dependencies
+**/node_modules/
+
+# build output
+client/dist/
+
+# runtime data (trades, screenshots, backups, credentials)
+server/data/
+server/uploads/
+
+# image artifacts
+*.tar
+
+# misc
+*.timestamp-*.mjs
+.DS_Store
+npm-debug.log*

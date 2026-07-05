@@ -1,0 +1,8 @@
+**/node_modules
+client/dist
+server/data
+server/uploads
+*.tar
+.git
+npm-debug.log
+*.timestamp-*.mjs
