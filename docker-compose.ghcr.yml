@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     pull_policy: always
     ports:
-      - "8088:3001"
+      - "9088:3001"
     volumes:
       - ./data/trades:/app/server/data
       - ./data/uploads:/app/server/uploads

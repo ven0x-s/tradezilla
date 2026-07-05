@@ -90,6 +90,20 @@ rebuild. The Tradovate credentials file (`server/data/tradovate.json`) also pers
 
 ---
 
+## Quickstart on the NAS (one command)
+
+No need to copy the repo onto the NAS at all. This single command creates
+`~/tradezilla`, fetches the compose file, pulls the image and starts the
+container, all in one go:
+
+```
+curl -fsSL -o ~/tradezilla-quickstart.sh https://raw.githubusercontent.com/ven0x-s/tradezilla/main/nas-quickstart.sh && sh ~/tradezilla-quickstart.sh
+```
+
+Open `http://<nas-ip>:9088` afterwards. Safe to re-run any time (e.g. after a
+new image is published) - it never touches your existing `data/trades` and
+`data/uploads` folders.
+
 ## Automated image builds (GitHub Actions + GHCR)
 
 `.github/workflows/docker-publish.yml` builds the image and pushes it to the GitHub
