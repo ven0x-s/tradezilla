@@ -83,7 +83,7 @@ function decorate(t) {
 const FIELDS = [
   'date', 'time', 'symbol', 'direction', 'entry', 'exit', 'contracts',
   'stopLoss', 'takeProfit', 'commissions', 'pointValue', 'setup',
-  'model', 'entryModel', 'htfDelivery',
+  'model', 'entryModel', 'htfDelivery', 'newsEvent',
   'session', 'notes', 'source', 'sourceId',
 ];
 

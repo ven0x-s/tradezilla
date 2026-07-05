@@ -153,7 +153,7 @@ const CSV_COLUMNS = [
   'date', 'time', 'symbol', 'direction', 'entry', 'exit', 'contracts',
   'stopLoss', 'takeProfit', 'pointValue', 'commissions', 'resultPoints',
   'resultDollars', 'riskDollars', 'rMultiple', 'setup', 'model', 'entryModel',
-  'htfDelivery', 'session', 'notes',
+  'htfDelivery', 'newsEvent', 'session', 'notes',
 ];
 
 app.get('/api/export/csv', (req, res) => {
@@ -186,6 +186,7 @@ app.post('/api/import/csv', (req, res) => {
     model: o.model ?? o.Model ?? '',
     entryModel: o.entryModel ?? o.EntryModel ?? o['Entry model'] ?? '',
     htfDelivery: o.htfDelivery ?? o.HtfDelivery ?? o['HTF delivery'] ?? '',
+    newsEvent: o.newsEvent ?? o.NewsEvent ?? o['News event'] ?? o.News ?? '',
     session: o.session ?? o.Session ?? '',
     notes: o.notes ?? o.Notes ?? '',
   }));

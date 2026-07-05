@@ -1,7 +1,7 @@
 import React from 'react';
 import { SESSIONS } from '../helpers.js';
 
-const EMPTY_FILTERS = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', session: '', direction: '', from: '', to: '' };
+const EMPTY_FILTERS = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', newsEvent: '', session: '', direction: '', from: '', to: '' };
 
 export default function Filters({ trades, filters, setFilters }) {
   const symbols = Array.from(new Set(trades.map((t) => t.symbol).filter(Boolean))).sort();
@@ -9,6 +9,7 @@ export default function Filters({ trades, filters, setFilters }) {
   const models = Array.from(new Set(trades.map((t) => t.model).filter(Boolean))).sort();
   const entryModels = Array.from(new Set(trades.map((t) => t.entryModel).filter(Boolean))).sort();
   const htfDeliveries = Array.from(new Set(trades.map((t) => t.htfDelivery).filter(Boolean))).sort();
+  const newsEvents = Array.from(new Set(trades.map((t) => t.newsEvent).filter(Boolean))).sort();
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: v }));
   const active = Object.keys(EMPTY_FILTERS).some((k) => filters[k]);
 
@@ -47,6 +48,13 @@ export default function Filters({ trades, filters, setFilters }) {
         <select value={filters.htfDelivery} onChange={(e) => set('htfDelivery', e.target.value)}>
           <option value="">All</option>
           {htfDeliveries.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label>News</label>
+        <select value={filters.newsEvent} onChange={(e) => set('newsEvent', e.target.value)}>
+          <option value="">All</option>
+          {newsEvents.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
       <div className="field">

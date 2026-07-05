@@ -6,7 +6,7 @@ const COLS = [
   ['entry', 'Entry'], ['exit', 'Exit'], ['contracts', 'Qty'],
   ['resultPoints', 'Pts'], ['resultDollars', 'P&L'], ['rMultiple', 'R'],
   ['setup', 'Setup'], ['model', 'Model'], ['entryModel', 'Entry model'],
-  ['htfDelivery', 'HTF delivery'], ['session', 'Session'],
+  ['htfDelivery', 'HTF delivery'], ['newsEvent', 'News'], ['session', 'Session'],
 ];
 
 export default function TradesView({ trades, onEdit, onDelete }) {
@@ -63,6 +63,7 @@ export default function TradesView({ trades, onEdit, onDelete }) {
               <td>{t.model || '-'}</td>
               <td>{t.entryModel || '-'}</td>
               <td>{t.htfDelivery || '-'}</td>
+              <td>{t.newsEvent ? <span className="tag news">{t.newsEvent}</span> : '-'}</td>
               <td>{t.session || '-'}</td>
               <td>{(t.screenshots || []).length || ''}</td>
               <td>

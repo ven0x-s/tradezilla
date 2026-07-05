@@ -1,8 +1,8 @@
 # Tradezilla Journal
 
-A local trading journal for NQ / ES futures. React frontend, Express backend, and a
-file-based JSON datastore on the server so your data persists on disk and survives
-reloads (nothing is kept in fragile browser storage).
+A local trading journal for NQ / ES futures. Express backend with a file-based JSON
+datastore so your data persists on disk and survives reloads (nothing is kept in
+fragile browser storage). The frontend is branded **Pugzilla**.
 
 ## Requirements
 
@@ -38,6 +38,10 @@ They build on first run if needed, then start the server.
   entry/exit, contracts, stop loss, take profit, commissions, setup tag, model, entry
   model, HTF delivery, session (London/NY/Asia) and notes. Result in points and dollars
   plus R multiple are computed automatically.
+- Mark a trade with red-folder news (CPI, NFP, FOMC, PMI, etc, quick-select or free
+  text). Filter trades by news event, see a "By news event" breakdown in Analysis, and
+  spot news days at a glance with a red dot on the Calendar - all to make it easy to
+  look back at how you traded previous red-folder days.
 - Attach entry/exit chart screenshots per trade (saved on the server).
 - Edit and delete trades.
 - Dashboard: total P&L, win rate, profit factor, average win/loss, largest win/loss,

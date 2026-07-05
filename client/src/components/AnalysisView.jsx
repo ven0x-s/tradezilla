@@ -42,6 +42,9 @@ export default function AnalysisView({ trades }) {
     <div>
       <Table title="By symbol" rows={groupStats(trades, (t) => t.symbol)} />
       <Table title="By setup" rows={groupStats(trades, (t) => t.setup)} />
+      <Table title="By model" rows={groupStats(trades, (t) => t.model)} />
+      <Table title="By entry model" rows={groupStats(trades, (t) => t.entryModel)} />
+      <Table title="By news event" rows={groupStats(trades, (t) => t.newsEvent || 'No news')} />
       <Table title="By session" rows={groupStats(trades, (t) => t.session)} />
       <Table title="By direction" rows={groupStats(trades, (t) => (t.direction === 'short' ? 'Short' : 'Long'))} />
     </div>

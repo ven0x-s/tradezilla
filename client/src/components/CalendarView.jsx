@@ -9,10 +9,13 @@ export default function CalendarView({ trades }) {
     return { y: d.getFullYear(), m: d.getMonth() };
   });
 
-  // aggregate P&L per day
+  // aggregate P&L per day (news is tracked even for trades without a result yet)
   const byDay = {};
+  const newsByDay = {};
   for (const t of trades) {
-    if (!t.date || t.resultDollars == null) continue;
+    if (!t.date) continue;
+    if (t.newsEvent) (newsByDay[t.date] = newsByDay[t.date] || new Set()).add(t.newsEvent);
+    if (t.resultDollars == null) continue;
     const d = byDay[t.date] || { pnl: 0, count: 0 };
     d.pnl += t.resultDollars; d.count += 1;
     byDay[t.date] = d;
@@ -56,9 +59,14 @@ export default function CalendarView({ trades }) {
         {cells.map((c, i) => {
           if (!c) return <div key={i} className="cal-cell empty" />;
           const cls = c.data ? (c.data.pnl > 0 ? 'win' : c.data.pnl < 0 ? 'loss' : '') : '';
+          const newsSet = newsByDay[c.iso];
+          const news = newsSet ? Array.from(newsSet).join(', ') : '';
           return (
-            <div key={i} className={'cal-cell ' + cls}>
-              <div className="d">{c.d}</div>
+            <div key={i} className={'cal-cell ' + cls} title={news}>
+              <div className="d">
+                {c.d}
+                {news && <span className="news-dot" />}
+              </div>
               {c.data && <>
                 <div className={'p ' + pnlClass(c.data.pnl)}>{fmtUSD(c.data.pnl)}</div>
                 <div className="c">{c.data.count} trade{c.data.count > 1 ? 's' : ''}</div>

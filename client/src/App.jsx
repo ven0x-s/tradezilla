@@ -17,7 +17,7 @@ const TABS = [
   ['data', 'Data'],
 ];
 
-const emptyFilters = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', session: '', direction: '', from: '', to: '' };
+const emptyFilters = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', newsEvent: '', session: '', direction: '', from: '', to: '' };
 
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -86,6 +86,7 @@ export default function App() {
     if (filters.model && t.model !== filters.model) return false;
     if (filters.entryModel && t.entryModel !== filters.entryModel) return false;
     if (filters.htfDelivery && t.htfDelivery !== filters.htfDelivery) return false;
+    if (filters.newsEvent && t.newsEvent !== filters.newsEvent) return false;
     if (filters.session && t.session !== filters.session) return false;
     if (filters.direction && t.direction !== filters.direction) return false;
     if (filters.from && (t.date || '') < filters.from) return false;
@@ -110,7 +111,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand"><span className="z">◤</span> Trade<span className="z">zilla</span> <span className="full muted" style={{ fontWeight: 400, fontSize: 13 }}>Journal</span></div>
+        <div className="brand"><img src="/pugzilla-logo.jpg" alt="Pugzilla" className="brand-logo" /> Pug<span className="z">zilla</span> <span className="full muted" style={{ fontWeight: 400, fontSize: 13 }}>Journal</span></div>
         <nav className="nav">
           {TABS.map(([k, label]) => (
             <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>{label}</button>

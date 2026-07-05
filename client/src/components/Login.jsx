@@ -36,7 +36,7 @@ export default function Login({ mode, onAuthed }) {
   return (
     <div className="login-screen">
       <form className="login-card" onSubmit={submit}>
-        <div className="brand"><span className="z">◤</span> Trade<span className="z">zilla</span></div>
+        <div className="brand"><img src="/pugzilla-logo.jpg" alt="Pugzilla" className="brand-logo" /> Pug<span className="z">zilla</span></div>
         <h2>{isRegister ? 'Maak je account aan' : 'Inloggen'}</h2>
         {isRegister && <p className="hint">Eerste keer? Maak hier je persoonlijke login aan.</p>}
         <div className="field">

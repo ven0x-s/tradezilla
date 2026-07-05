@@ -3,12 +3,13 @@ import { api } from '../api.js';
 import { previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, todayISO } from '../helpers.js';
 
 const QUICK_SYMBOLS = ['NQ', 'ES', 'MNQ', 'MES'];
+const QUICK_NEWS = ['CPI', 'NFP', 'FOMC', 'PMI', 'PCE', 'GDP', 'Retail Sales', 'Jobless Claims', 'ISM', 'Fed speech'];
 
 const blank = () => ({
   date: todayISO(), time: '', symbol: 'NQ', direction: 'long',
   entry: '', exit: '', contracts: '1', stopLoss: '', takeProfit: '',
   pointValue: String(defaultPointValue('NQ')), commissions: '', setup: '',
-  model: '', entryModel: '', htfDelivery: '',
+  model: '', entryModel: '', htfDelivery: '', newsEvent: '',
   session: 'NY', notes: '', screenshots: [],
 });
 
@@ -164,6 +165,22 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
             <div className="field">
               <label>HTF delivery</label>
               <input value={form.htfDelivery || ''} onChange={(e) => set('htfDelivery', e.target.value)} placeholder="e.g. bullish, bearish" />
+            </div>
+            <div className="field full">
+              <label>News (red folder)</label>
+              <div className="chip-row">
+                {QUICK_NEWS.map((n) => (
+                  <button
+                    key={n} type="button"
+                    className={'chip news' + (form.newsEvent === n ? ' active' : '')}
+                    onClick={() => set('newsEvent', form.newsEvent === n ? '' : n)}
+                  >{n}</button>
+                ))}
+              </div>
+              <input
+                value={form.newsEvent || ''} onChange={(e) => set('newsEvent', e.target.value)}
+                placeholder="Other event, or leave blank for no news" style={{ marginTop: 8 }}
+              />
             </div>
             <div className="field full">
               <label>Notes</label>
