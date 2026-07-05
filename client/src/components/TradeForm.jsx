@@ -4,12 +4,19 @@ import { previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, toda
 
 const QUICK_SYMBOLS = ['NQ', 'ES', 'MNQ', 'MES'];
 const QUICK_NEWS = ['CPI', 'NFP', 'FOMC', 'PMI', 'PCE', 'GDP', 'Retail Sales', 'Jobless Claims', 'ISM', 'Fed speech'];
+const QUICK_EMOTIONS = ['FOMO', 'Geduldig', 'Wraak-trade', 'Zelfverzekerd', 'Angstig', 'Hebzuchtig', 'Verveeld', 'Gedisciplineerd'];
+const MISTAKES = [
+  'Stoploss te vroeg verplaatst', 'Te grote positie (overleveraging)', 'Strategie niet gevolgd',
+  'Te vroeg ingestapt (FOMO entry)', 'Winst te vroeg genomen', 'Verlies te lang laten lopen',
+  'Geen stoploss gezet', 'Revenge trade na verlies', 'Overtraded (te veel trades)', 'Tegen HTF bias in',
+];
 
 const blank = () => ({
-  date: todayISO(), time: '', symbol: 'NQ', direction: 'long',
+  date: todayISO(), time: '', exitTime: '', symbol: 'NQ', direction: 'long',
   entry: '', exit: '', contracts: '1', stopLoss: '', takeProfit: '',
   pointValue: String(defaultPointValue('NQ')), commissions: '', setup: '',
   model: '', entryModel: '', htfDelivery: '', newsEvent: '',
+  emotionEntry: '', emotionExit: '', mistake: '',
   session: 'NY', notes: '', screenshots: [],
 });
 
@@ -92,8 +99,12 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
               <input type="date" value={form.date || ''} onChange={(e) => set('date', e.target.value)} />
             </div>
             <div className="field">
-              <label>Time</label>
+              <label>Time (entry)</label>
               <input type="time" value={form.time || ''} onChange={(e) => set('time', e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Time (exit)</label>
+              <input type="time" value={form.exitTime || ''} onChange={(e) => set('exitTime', e.target.value)} />
             </div>
             <div className="field">
               <label>Session</label>
@@ -183,6 +194,37 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
               />
             </div>
             <div className="field full">
+              <label>Emotion at entry</label>
+              <div className="chip-row">
+                {QUICK_EMOTIONS.map((n) => (
+                  <button
+                    key={n} type="button"
+                    className={'chip' + (form.emotionEntry === n ? ' active' : '')}
+                    onClick={() => set('emotionEntry', form.emotionEntry === n ? '' : n)}
+                  >{n}</button>
+                ))}
+              </div>
+            </div>
+            <div className="field full">
+              <label>Emotion at exit</label>
+              <div className="chip-row">
+                {QUICK_EMOTIONS.map((n) => (
+                  <button
+                    key={n} type="button"
+                    className={'chip' + (form.emotionExit === n ? ' active' : '')}
+                    onClick={() => set('emotionExit', form.emotionExit === n ? '' : n)}
+                  >{n}</button>
+                ))}
+              </div>
+            </div>
+            <div className="field full">
+              <label>Mental mistake</label>
+              <select value={form.mistake || ''} onChange={(e) => set('mistake', e.target.value)}>
+                <option value="">- none -</option>
+                {MISTAKES.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div className="field full">
               <label>Notes</label>
               <textarea rows="2" value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} />
             </div>
@@ -241,6 +283,6 @@ function normalize(t) {
 }
 
 function stripComputed(form) {
-  const { id, resultPoints, resultDollars, riskDollars, rMultiple, screenshots, createdAt, updatedAt, ...rest } = form;
+  const { id, resultPoints, resultDollars, riskDollars, rMultiple, holdingMinutes, screenshots, createdAt, updatedAt, ...rest } = form;
   return rest;
 }

@@ -8,12 +8,15 @@ import CalendarView from './components/CalendarView.jsx';
 import AnalysisView from './components/AnalysisView.jsx';
 import DataView from './components/DataView.jsx';
 import Login from './components/Login.jsx';
+import ShareCard from './components/ShareCard.jsx';
+import PsychologyView from './components/PsychologyView.jsx';
 
 const TABS = [
   ['dashboard', 'Dashboard'],
   ['trades', 'Trades'],
   ['calendar', 'Calendar'],
   ['analysis', 'Analysis'],
+  ['psychology', 'Psychology'],
   ['data', 'Data'],
 ];
 
@@ -29,6 +32,7 @@ export default function App() {
   const [tab, setTab] = useState('dashboard');
   const [filters, setFilters] = useState(emptyFilters);
   const [editing, setEditing] = useState(null); // trade object or {} for new
+  const [sharing, setSharing] = useState(null); // trade object being shared
   const [toast, setToast] = useState(null);
 
   const notify = useCallback((msg) => {
@@ -130,9 +134,10 @@ export default function App() {
           <>
             {showFilters && <Filters trades={trades} filters={filters} setFilters={setFilters} />}
             {tab === 'dashboard' && <Dashboard trades={filtered} />}
-            {tab === 'trades' && <TradesView trades={filtered} onEdit={setEditing} onDelete={del} />}
+            {tab === 'trades' && <TradesView trades={filtered} onEdit={setEditing} onDelete={del} onShare={setSharing} />}
             {tab === 'calendar' && <CalendarView trades={filtered} />}
             {tab === 'analysis' && <AnalysisView trades={filtered} />}
+            {tab === 'psychology' && <PsychologyView trades={filtered} />}
             {tab === 'data' && <DataView trades={trades} onChanged={load} notify={notify} />}
           </>
         )}
@@ -146,6 +151,7 @@ export default function App() {
           notify={notify}
         />
       )}
+      {sharing && <ShareCard trade={sharing} onClose={() => setSharing(null)} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );

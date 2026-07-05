@@ -6,10 +6,12 @@ const COLS = [
   ['entry', 'Entry'], ['exit', 'Exit'], ['contracts', 'Qty'],
   ['resultPoints', 'Pts'], ['resultDollars', 'P&L'], ['rMultiple', 'R'],
   ['setup', 'Setup'], ['model', 'Model'], ['entryModel', 'Entry model'],
-  ['htfDelivery', 'HTF delivery'], ['newsEvent', 'News'], ['session', 'Session'],
+  ['htfDelivery', 'HTF delivery'], ['newsEvent', 'News'],
+  ['emotionEntry', 'Emotion in'], ['emotionExit', 'Emotion out'], ['mistake', 'Mistake'],
+  ['session', 'Session'],
 ];
 
-export default function TradesView({ trades, onEdit, onDelete }) {
+export default function TradesView({ trades, onEdit, onDelete, onShare }) {
   const [sortKey, setSortKey] = useState('date');
   const [dir, setDir] = useState('desc');
 
@@ -64,10 +66,14 @@ export default function TradesView({ trades, onEdit, onDelete }) {
               <td>{t.entryModel || '-'}</td>
               <td>{t.htfDelivery || '-'}</td>
               <td>{t.newsEvent ? <span className="tag news">{t.newsEvent}</span> : '-'}</td>
+              <td>{t.emotionEntry || '-'}</td>
+              <td>{t.emotionExit || '-'}</td>
+              <td>{t.mistake ? <span className="tag mistake">{t.mistake}</span> : '-'}</td>
               <td>{t.session || '-'}</td>
               <td>{(t.screenshots || []).length || ''}</td>
               <td>
                 <div className="row-actions">
+                  <button className="btn ghost sm" onClick={() => onShare(t)}>Share</button>
                   <button className="btn ghost sm" onClick={() => onEdit(t)}>Edit</button>
                   <button className="btn danger sm" onClick={() => onDelete(t)}>Del</button>
                 </div>

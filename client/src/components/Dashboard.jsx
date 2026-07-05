@@ -1,6 +1,6 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
-import { computeStats, equitySeries, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
+import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
+import { computeStats, equitySeries, maxDrawdown, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
 
 function Stat({ label, value, sub, cls }) {
   return (
@@ -16,6 +16,7 @@ export default function Dashboard({ trades }) {
   const s = computeStats(trades);
   const eq = equitySeries(trades);
   const pf = s.profitFactor === Infinity ? '∞' : fmtNum(s.profitFactor, 2);
+  const maxDd = maxDrawdown(eq);
 
   if (!trades.length) {
     return <div className="empty-state">No trades match the current filters. Add a trade to get started.</div>;
@@ -32,6 +33,7 @@ export default function Dashboard({ trades }) {
         <Stat label="Avg loss" value={fmtUSD(s.avgLoss)} cls="neg" />
         <Stat label="Largest win" value={fmtUSD(s.largestWin)} cls="pos" />
         <Stat label="Largest loss" value={fmtUSD(s.largestLoss)} cls="neg" />
+        <Stat label="Max drawdown" value={fmtUSD(maxDd)} cls={maxDd < 0 ? 'neg' : ''} />
       </div>
 
       <div className="section-title">Equity curve</div>
@@ -53,6 +55,27 @@ export default function Dashboard({ trades }) {
           </ResponsiveContainer>
         ) : <div className="hint">No closed trades yet.</div>}
       </div>
+
+      {eq.length > 0 && (
+        <>
+          <div className="section-title">Drawdown</div>
+          <div className="card">
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={eq} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
+                <CartesianGrid stroke="#262d3a" strokeDasharray="3 3" />
+                <XAxis dataKey="i" stroke="#8b98a9" tick={{ fontSize: 11 }} />
+                <YAxis stroke="#8b98a9" tick={{ fontSize: 11 }} tickFormatter={(v) => '$' + v.toLocaleString()} width={70} />
+                <Tooltip
+                  contentStyle={{ background: '#161b22', border: '1px solid #262d3a', borderRadius: 8, color: '#e6edf3' }}
+                  formatter={(v) => [fmtUSD(v), 'Drawdown']}
+                  labelFormatter={(l) => 'Trade #' + l}
+                />
+                <Area type="monotone" dataKey="drawdown" stroke="#ef4444" fill="rgba(239,68,68,0.25)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
 }

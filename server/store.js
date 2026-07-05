@@ -67,12 +67,24 @@ function computeMetrics(t) {
     }
   }
 
+  let holdingMinutes = null;
+  if (t.time && t.exitTime) {
+    const [h1, m1] = String(t.time).split(':').map(Number);
+    const [h2, m2] = String(t.exitTime).split(':').map(Number);
+    if ([h1, m1, h2, m2].every(Number.isFinite)) {
+      let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+      if (diff < 0) diff += 24 * 60; // exit past midnight
+      holdingMinutes = diff;
+    }
+  }
+
   return {
     pointValue: pv,
     resultPoints,
     resultDollars,
     riskDollars: riskDollars != null ? +riskDollars.toFixed(2) : null,
     rMultiple,
+    holdingMinutes,
   };
 }
 
@@ -81,9 +93,10 @@ function decorate(t) {
 }
 
 const FIELDS = [
-  'date', 'time', 'symbol', 'direction', 'entry', 'exit', 'contracts',
+  'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'contracts',
   'stopLoss', 'takeProfit', 'commissions', 'pointValue', 'setup',
   'model', 'entryModel', 'htfDelivery', 'newsEvent',
+  'emotionEntry', 'emotionExit', 'mistake',
   'session', 'notes', 'source', 'sourceId',
 ];
 

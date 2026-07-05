@@ -42,6 +42,16 @@ They build on first run if needed, then start the server.
   text). Filter trades by news event, see a "By news event" breakdown in Analysis, and
   spot news days at a glance with a red dot on the Calendar - all to make it easy to
   look back at how you traded previous red-folder days.
+- Trading psychology: tag your emotion at entry and exit (FOMO, Geduldig, Wraak-trade,
+  Zelfverzekerd, etc) and log a mental mistake (moved stop early, overleveraged,
+  strategy not followed, ...). The Psychology tab breaks down win rate and average
+  $/trade per emotion and mistake, plus auto-generated callouts like "Je verliest
+  gemiddeld $200 per trade als je FOMO voelt".
+- Share card: export any trade as a clean image (entry, exit, P&L, R, tags and its
+  first screenshot) with one click - download as PNG or copy straight to the
+  clipboard to paste into Twitter/X or Discord.
+- Deeper analytics: holding time vs profitability scatter chart, best/worst days of
+  the week and hours of the day, and a drawdown chart under the equity curve.
 - Attach entry/exit chart screenshots per trade (saved on the server).
 - Edit and delete trades.
 - Dashboard: total P&L, win rate, profit factor, average win/loss, largest win/loss,

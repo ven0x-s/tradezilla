@@ -35,17 +35,26 @@ export function computeStats(trades) {
   };
 }
 
-// Build equity curve points ordered chronologically (oldest -> newest).
+// Build equity curve points ordered chronologically (oldest -> newest),
+// including running peak and drawdown (<=0) at each point.
 export function equitySeries(trades) {
   const closed = trades
     .filter((t) => t.resultDollars != null)
     .slice()
     .sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')));
-  let cum = 0;
+  let cum = 0, peak = 0;
   return closed.map((t, i) => {
     cum += t.resultDollars;
-    return { i: i + 1, equity: +cum.toFixed(2), label: t.date || '', pnl: t.resultDollars };
+    peak = Math.max(peak, cum);
+    return {
+      i: i + 1, equity: +cum.toFixed(2), label: t.date || '', pnl: t.resultDollars,
+      drawdown: +(cum - peak).toFixed(2),
+    };
   });
+}
+
+export function maxDrawdown(eq) {
+  return eq.reduce((worst, p) => Math.min(worst, p.drawdown), 0);
 }
 
 // Group by a key, returning per-group stats.
@@ -62,6 +71,21 @@ export function groupStats(trades, keyFn) {
 
 export const SESSIONS = ['London', 'NY', 'Asia'];
 export const todayISO = () => new Date().toISOString().slice(0, 10);
+
+export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+export function weekdayOf(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return null;
+  return WEEKDAYS[(d.getDay() + 6) % 7];
+}
+
+export function hourOf(timeStr) {
+  if (!timeStr) return null;
+  const h = parseInt(String(timeStr).split(':')[0], 10);
+  return Number.isFinite(h) ? h : null;
+}
 
 const DEFAULT_PV = { NQ: 20, ES: 50, MNQ: 2, MES: 5 };
 export const defaultPointValue = (sym) => DEFAULT_PV[String(sym || '').toUpperCase()] ?? 1;

@@ -1,0 +1,85 @@
+import React from 'react';
+import { groupStats, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
+
+function Table({ title, rows }) {
+  if (!rows.length) return null;
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div className="section-title">{title}</div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{title.replace('By ', '')}</th>
+              <th className="num">Trades</th>
+              <th className="num">Win %</th>
+              <th className="num">P&L</th>
+              <th className="num">Avg $ / trade</th>
+              <th className="num">Avg R</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key}>
+                <td><span className="tag">{r.key}</span></td>
+                <td className="num">{r.count}</td>
+                <td className="num">{fmtNum(r.winRate, 1)}%</td>
+                <td className={'num ' + pnlClass(r.totalPnl)}>{fmtUSD(r.totalPnl)}</td>
+                <td className={'num ' + pnlClass(r.expectancy)}>{fmtUSD(r.expectancy)}</td>
+                <td className={'num ' + pnlClass(r.avgR)}>{r.avgR == null ? '-' : fmtNum(r.avgR, 2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Plain-language callouts for the groups that cost or make the most money,
+// so the pattern jumps out without having to read the whole table.
+function Insights({ emotionRows, mistakeRows }) {
+  const costly = [...emotionRows, ...mistakeRows]
+    .filter((r) => r.count >= 2 && r.expectancy < 0)
+    .sort((a, b) => a.expectancy - b.expectancy)
+    .slice(0, 3);
+  const profitable = [...emotionRows]
+    .filter((r) => r.count >= 2 && r.expectancy > 0)
+    .sort((a, b) => b.expectancy - a.expectancy)
+    .slice(0, 2);
+
+  if (!costly.length && !profitable.length) return null;
+
+  return (
+    <div className="grid" style={{ marginBottom: 24, gap: 10 }}>
+      {costly.map((r) => (
+        <div key={'c' + r.key} className="card insight bad">
+          Je verliest gemiddeld <b>{fmtUSD(Math.abs(r.expectancy))}</b> per trade bij <b>{r.key}</b> ({r.count} trades, {fmtNum(r.winRate, 0)}% win).
+        </div>
+      ))}
+      {profitable.map((r) => (
+        <div key={'p' + r.key} className="card insight good">
+          Je bent het meest winstgevend bij <b>{r.key}</b>: gemiddeld <b>{fmtUSD(r.expectancy)}</b> per trade ({r.count} trades, {fmtNum(r.winRate, 0)}% win).
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function PsychologyView({ trades }) {
+  if (!trades.length) return <div className="empty-state">No trades match the current filters.</div>;
+
+  const entryRows = groupStats(trades, (t) => t.emotionEntry || 'Untagged');
+  const exitRows = groupStats(trades, (t) => t.emotionExit || 'Untagged');
+  const mistakeRows = groupStats(trades, (t) => t.mistake || 'None').filter((r) => r.key !== 'None');
+  const allMistakeRows = groupStats(trades, (t) => t.mistake || 'None');
+
+  return (
+    <div>
+      <Insights emotionRows={entryRows.filter((r) => r.key !== 'Untagged')} mistakeRows={mistakeRows} />
+      <Table title="By emotion at entry" rows={entryRows} />
+      <Table title="By emotion at exit" rows={exitRows} />
+      <Table title="By mental mistake" rows={allMistakeRows} />
+    </div>
+  );
+}

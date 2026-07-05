@@ -150,10 +150,11 @@ app.delete('/api/trades/:id/screenshots/:sid', (req, res) => {
 
 // ---- CSV export ----
 const CSV_COLUMNS = [
-  'date', 'time', 'symbol', 'direction', 'entry', 'exit', 'contracts',
+  'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'contracts',
   'stopLoss', 'takeProfit', 'pointValue', 'commissions', 'resultPoints',
-  'resultDollars', 'riskDollars', 'rMultiple', 'setup', 'model', 'entryModel',
-  'htfDelivery', 'newsEvent', 'session', 'notes',
+  'resultDollars', 'riskDollars', 'rMultiple', 'holdingMinutes', 'setup', 'model',
+  'entryModel', 'htfDelivery', 'newsEvent', 'emotionEntry', 'emotionExit', 'mistake',
+  'session', 'notes',
 ];
 
 app.get('/api/export/csv', (req, res) => {
@@ -187,6 +188,10 @@ app.post('/api/import/csv', (req, res) => {
     entryModel: o.entryModel ?? o.EntryModel ?? o['Entry model'] ?? '',
     htfDelivery: o.htfDelivery ?? o.HtfDelivery ?? o['HTF delivery'] ?? '',
     newsEvent: o.newsEvent ?? o.NewsEvent ?? o['News event'] ?? o.News ?? '',
+    exitTime: o.exitTime ?? o['Exit time'] ?? '',
+    emotionEntry: o.emotionEntry ?? o['Entry emotion'] ?? '',
+    emotionExit: o.emotionExit ?? o['Exit emotion'] ?? '',
+    mistake: o.mistake ?? o.Mistake ?? '',
     session: o.session ?? o.Session ?? '',
     notes: o.notes ?? o.Notes ?? '',
   }));
