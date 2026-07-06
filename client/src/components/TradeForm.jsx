@@ -231,10 +231,7 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
             </div>
             <div className="field">
               <label>Rating</label>
-              <select value={form.rating || ''} onChange={(e) => set('rating', e.target.value)}>
-                <option value="">-</option>
-                {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{'\u2605'.repeat(n)}</option>)}
-              </select>
+              <input value={form.rating || ''} onChange={(e) => set('rating', e.target.value)} placeholder="e.g. \u2605\u2605\u2605\u2605, A+, 8/10" />
             </div>
             <div className="field">
               <label>Emotion</label>

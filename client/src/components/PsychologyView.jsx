@@ -74,8 +74,7 @@ export default function PsychologyView({ trades }) {
   const mistakeRows = groupStats(trades, (t) => t.mistake || 'None').filter((r) => r.key !== 'None');
   const allMistakeRows = groupStats(trades, (t) => t.mistake || 'None');
   const gradeRows = groupStats(trades, (t) => t.grade || 'Ungraded').sort((a, b) => a.key.localeCompare(b.key));
-  const ratingRows = groupStats(trades, (t) => (t.rating ? '★'.repeat(Number(t.rating)) : 'Unrated'))
-    .sort((a, b) => b.key.length - a.key.length);
+  const ratingRows = groupStats(trades, (t) => t.rating || 'Unrated');
   const mistakeTagRows = mistakeTagStats(trades);
 
   return (

@@ -95,7 +95,7 @@ export default function AnalysisView({ trades }) {
       <Table title="By session" rows={groupStats(trades, (t) => t.session)} />
       <Table title="By emotion" rows={groupStats(trades, (t) => t.emotion)} />
       <Table title="By direction" rows={groupStats(trades, (t) => (t.direction === 'short' ? 'Short' : 'Long'))} />
-      <Table title="By rating" rows={groupStats(trades, (t) => (t.rating ? '★'.repeat(Number(t.rating)) : null)).sort((a, b) => b.key.length - a.key.length)} />
+      <Table title="By rating" rows={groupStats(trades, (t) => t.rating)} />
 
       <div className="section-title">Holding time vs profitability</div>
       <HoldingTimeChart trades={trades} />
