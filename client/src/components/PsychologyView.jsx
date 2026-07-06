@@ -74,7 +74,6 @@ export default function PsychologyView({ trades }) {
   const mistakeRows = groupStats(trades, (t) => t.mistake || 'None').filter((r) => r.key !== 'None');
   const allMistakeRows = groupStats(trades, (t) => t.mistake || 'None');
   const gradeRows = groupStats(trades, (t) => t.grade || 'Ungraded').sort((a, b) => a.key.localeCompare(b.key));
-  const ratingRows = groupStats(trades, (t) => t.rating || 'Unrated');
   const mistakeTagRows = mistakeTagStats(trades);
 
   return (
@@ -88,7 +87,6 @@ export default function PsychologyView({ trades }) {
       <Table title="By mental mistake" rows={allMistakeRows} />
       <Table title="By mistake tag" rows={mistakeTagRows} />
       <Table title="By grade" rows={gradeRows} />
-      <Table title="By rating" rows={ratingRows} />
     </div>
   );
 }

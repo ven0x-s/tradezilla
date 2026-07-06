@@ -302,17 +302,10 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
               label="Emotion at exit" value={form.emotionExit} options={QUICK_EMOTIONS}
               onChange={(v) => set('emotionExit', v)} placeholder="Custom emotion"
             />
-            <div className="field full">
-              <label>Mental mistake</label>
-              <select value={form.mistake || ''} onChange={(e) => set('mistake', e.target.value)}>
-                <option value="">- none -</option>
-                {MISTAKES.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label>Rating</label>
-              <input value={form.rating || ''} onChange={(e) => set('rating', e.target.value)} placeholder="e.g. ****, A+, 8/10" />
-            </div>
+            <ChoiceField
+              label="Mental mistake" value={form.mistake} options={MISTAKES}
+              onChange={(v) => set('mistake', v)} placeholder="Custom mistake" full
+            />
             <div className="field">
               <label>Emotion</label>
               <select value={form.emotion || ''} onChange={(e) => set('emotion', e.target.value)}>

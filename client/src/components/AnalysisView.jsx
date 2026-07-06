@@ -127,7 +127,6 @@ export default function AnalysisView({ trades }) {
       <Table title="By session" rows={groupStats(trades, (t) => t.session)} />
       <Table title="By emotion" rows={groupStats(trades, (t) => t.emotion)} />
       <Table title="By direction" rows={groupStats(trades, (t) => (t.direction === 'short' ? 'Short' : 'Long'))} />
-      <Table title="By rating" rows={groupStats(trades, (t) => t.rating)} />
       <Table title="By account type" rows={groupStats(trades, (t) => t.accountType)} />
       <Table title="By prop firm" rows={groupStats(trades, (t) => t.propFirm)} />
       <Table title="By daily bias" rows={groupStats(trades, (t) => t.dailyBias)} />
