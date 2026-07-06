@@ -230,7 +230,7 @@ export const DAILY_BIAS = ['Bullish', 'Bearish', 'Neutral'];
 export const HTF_PDA = ['Premium', 'Discount', 'Equilibrium'];
 export const DRAW_ON_LIQUIDITY = ['PDH', 'PDL', 'PWH', 'PWL', 'Weekly open', 'Monthly open'];
 export const PO3_PHASES = ['Accumulation', 'Manipulation', 'Distribution'];
-export const ACCOUNT_TYPES = ['Personal', 'Eval', 'Demo Funded', 'Live Funded'];
+export const ACCOUNT_TYPES = ['Eval', 'Funded', 'Demo Funded', 'Live'];
 
 // Whether the trade direction aligned with the stated daily bias.
 // 'with' = long+bullish or short+bearish, 'against' = the opposite, null = neutral/unknown.

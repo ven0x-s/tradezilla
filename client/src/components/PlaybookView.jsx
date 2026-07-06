@@ -122,13 +122,13 @@ function PlaybookEditor({ initial, onClose, onSaved, notify, setupOptions }) {
   );
 }
 
-export default function PlaybookView({ trades, notify }) {
+export default function PlaybookView({ trades, notify, onChanged }) {
   const [playbooks, setPlaybooks] = useState([]);
   const [editing, setEditing] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
   const load = async () => {
-    try { setPlaybooks(await api.listPlaybooks()); } catch (e) { notify('Could not load playbooks: ' + e.message); }
+    try { setPlaybooks(await api.listPlaybooks()); if (onChanged) onChanged(); } catch (e) { notify('Could not load playbooks: ' + e.message); }
     finally { setLoaded(true); }
   };
   useEffect(() => { load(); }, []);
@@ -146,8 +146,9 @@ export default function PlaybookView({ trades, notify }) {
   }
 
   function tradesFor(pb) {
-    if (!pb.setupTag) return [];
-    return trades.filter((t) => setupTagsOf(t).includes(pb.setupTag));
+    // A trade belongs to a playbook if explicitly assigned (playbookId) or, as a
+    // fallback, if it carries the playbook's linked setup tag.
+    return trades.filter((t) => t.playbookId === pb.id || (pb.setupTag && setupTagsOf(t).includes(pb.setupTag)));
   }
 
   return (

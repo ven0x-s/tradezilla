@@ -8,10 +8,11 @@ const COLS = [
   ['setup', 'Setup'], ['model', 'Model'], ['entryModel', 'Entry model'],
   ['htfDelivery', 'HTF delivery'], ['newsEvent', 'News'], ['grade', 'Grade'],
   ['emotionEntry', 'Emotion in'], ['emotionExit', 'Emotion out'], ['mistake', 'Mistake'],
-  ['session', 'Session'],
+  ['accountType', 'Account'], ['playbookId', 'Playbook'], ['session', 'Session'],
 ];
 
-export default function TradesView({ trades, onEdit, onDelete, onShare }) {
+export default function TradesView({ trades, playbooks = [], onEdit, onDelete, onShare }) {
+  const pbName = (id) => (playbooks.find((p) => p.id === id) || {}).name || '';
   const [sortKey, setSortKey] = useState('date');
   const [dir, setDir] = useState('desc');
 
@@ -70,6 +71,8 @@ export default function TradesView({ trades, onEdit, onDelete, onShare }) {
               <td>{t.emotionEntry || '-'}</td>
               <td>{t.emotionExit || '-'}</td>
               <td>{t.mistake ? <span className="tag mistake">{t.mistake}</span> : '-'}</td>
+              <td>{t.accountType || '-'}</td>
+              <td>{pbName(t.playbookId) ? <span className="tag">{pbName(t.playbookId)}</span> : '-'}</td>
               <td>{t.session || '-'}</td>
               <td>{(t.screenshots || []).length || ''}</td>
               <td>

@@ -1,9 +1,9 @@
 import React from 'react';
-import { SESSIONS } from '../helpers.js';
+import { SESSIONS, ACCOUNT_TYPES } from '../helpers.js';
 
-const EMPTY_FILTERS = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '', session: '', direction: '', from: '', to: '' };
+const EMPTY_FILTERS = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '', accountType: '', playbook: '', session: '', direction: '', from: '', to: '' };
 
-export default function Filters({ trades, filters, setFilters }) {
+export default function Filters({ trades, playbooks = [], filters, setFilters }) {
   const symbols = Array.from(new Set(trades.map((t) => t.symbol).filter(Boolean))).sort();
   const setups = Array.from(new Set(trades.map((t) => t.setup).filter(Boolean))).sort();
   const models = Array.from(new Set(trades.map((t) => t.model).filter(Boolean))).sort();
@@ -63,6 +63,20 @@ export default function Filters({ trades, filters, setFilters }) {
         <select value={filters.grade} onChange={(e) => set('grade', e.target.value)}>
           <option value="">All</option>
           {grades.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label>Account type</label>
+        <select value={filters.accountType} onChange={(e) => set('accountType', e.target.value)}>
+          <option value="">All</option>
+          {ACCOUNT_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label>Playbook</label>
+        <select value={filters.playbook} onChange={(e) => set('playbook', e.target.value)}>
+          <option value="">All</option>
+          {playbooks.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
       <div className="field">

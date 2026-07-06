@@ -27,13 +27,14 @@ const TABS = [
   ['data', 'Data'],
 ];
 
-const emptyFilters = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '', session: '', direction: '', from: '', to: '' };
+const emptyFilters = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '', accountType: '', playbook: '', session: '', direction: '', from: '', to: '' };
 
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
   const [needsRegister, setNeedsRegister] = useState(false);
   const [trades, setTrades] = useState([]);
+  const [playbooks, setPlaybooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('dashboard');
@@ -103,7 +104,11 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => { if (user) load(); }, [user, load]);
+  const loadPlaybooks = useCallback(async () => {
+    try { setPlaybooks(await api.listPlaybooks()); } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { if (user) { load(); loadPlaybooks(); } }, [user, load, loadPlaybooks]);
 
   function onAuthed(u) {
     setUser(u);
@@ -125,6 +130,8 @@ export default function App() {
     if (filters.htfDelivery && t.htfDelivery !== filters.htfDelivery) return false;
     if (filters.newsEvent && t.newsEvent !== filters.newsEvent) return false;
     if (filters.grade && t.grade !== filters.grade) return false;
+    if (filters.accountType && t.accountType !== filters.accountType) return false;
+    if (filters.playbook && t.playbookId !== filters.playbook) return false;
     if (filters.session && t.session !== filters.session) return false;
     if (filters.direction && t.direction !== filters.direction) return false;
     if (filters.from && (t.date || '') < filters.from) return false;
@@ -169,14 +176,14 @@ export default function App() {
         </div>}
         {loading ? <div className="empty-state">Loading…</div> : (
           <>
-            {showFilters && <Filters trades={trades} filters={filters} setFilters={setFilters} />}
+            {showFilters && <Filters trades={trades} playbooks={playbooks} filters={filters} setFilters={setFilters} />}
             {tab === 'dashboard' && <Dashboard trades={filtered} />}
-            {tab === 'trades' && <TradesView trades={filtered} onEdit={setEditing} onDelete={del} onShare={setSharing} />}
+            {tab === 'trades' && <TradesView trades={filtered} playbooks={playbooks} onEdit={setEditing} onDelete={del} onShare={setSharing} />}
             {tab === 'calendar' && <CalendarView trades={filtered} />}
             {tab === 'insights' && <InsightsView trades={filtered} />}
-            {tab === 'analysis' && <AnalysisView trades={filtered} />}
+            {tab === 'analysis' && <AnalysisView trades={filtered} playbooks={playbooks} />}
             {tab === 'psychology' && <PsychologyView trades={filtered} />}
-            {tab === 'playbook' && <PlaybookView trades={trades} notify={notify} />}
+            {tab === 'playbook' && <PlaybookView trades={trades} notify={notify} onChanged={loadPlaybooks} />}
             {tab === 'data' && <DataView trades={trades} onChanged={load} notify={notify} />}
           </>
         )}
@@ -185,6 +192,7 @@ export default function App() {
       {editing && (
         <TradeForm
           trade={editing.id ? editing : null}
+          playbooks={playbooks}
           onClose={() => setEditing(null)}
           onSaved={() => load()}
           notify={notify}

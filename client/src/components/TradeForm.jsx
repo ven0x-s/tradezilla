@@ -60,7 +60,7 @@ const blank = () => ({
   emotionEntry: '', emotionExit: '', mistake: '',
   session: 'NY', notes: '', rating: '', planFollowed: false, emotion: '', mistakes: '',
   setupTags: [], dailyBias: '', htfPda: '', drawOnLiquidity: '', narrative: '', po3: '',
-  tvUrl: '', accountType: '', propFirm: '', rulesFollowed: true, ruleBroken: '',
+  tvUrl: '', accountType: '', propFirm: '', playbookId: '', rulesFollowed: true, ruleBroken: '',
   screenshots: [],
 });
 
@@ -106,7 +106,7 @@ function SetupTagsField({ value, onChange, tagRefs }) {
   );
 }
 
-export default function TradeForm({ trade, onClose, onSaved, notify }) {
+export default function TradeForm({ trade, playbooks = [], onClose, onSaved, notify }) {
   const [form, setForm] = useState(() => (trade ? normalize(trade) : blank()));
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState(null);
@@ -381,6 +381,13 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
               label="Prop firm" value={form.propFirm} options={['Topstep', 'Apex', 'TPT', 'MFFU', 'FTMO']}
               onChange={(v) => set('propFirm', v)} placeholder="Custom firm"
             />
+            <div className="field">
+              <label>Playbook</label>
+              <select value={form.playbookId || ''} onChange={(e) => set('playbookId', e.target.value)}>
+                <option value="">- none -</option>
+                {playbooks.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
             <div className="field">
               <label>Rules followed</label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, height: 38 }}>

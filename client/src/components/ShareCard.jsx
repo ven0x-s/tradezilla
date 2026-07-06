@@ -1,7 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fmtUSD, fmtNum, fmtR, pnlClass } from '../helpers.js';
 
-const W = 1200, H = 630;
+const W = 1200;
+
+function wrapLines(ctx, text, maxWidth) {
+  const words = String(text).replace(/\s+/g, ' ').trim().split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxWidth && cur) { lines.push(cur); cur = w; }
+    else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
 
 function loadImage(src) {
   return new Promise((resolve) => {
@@ -25,6 +38,24 @@ function roundRect(ctx, x, y, w, h, r) {
 
 async function draw(canvas, t) {
   const ctx = canvas.getContext('2d');
+  const shot = (t.screenshots || [])[0];
+  const hasImage = !!shot;
+  const leftW = hasImage ? 680 : W;
+
+  // Pre-measure notes so the canvas can grow and avoid truncation where it fits.
+  const NOTES_FONT = '16px Arial', NOTES_LH = 24, NOTES_LABEL_Y = 512, MAX_NOTES_LINES = 8;
+  let noteLines = [];
+  if (t.notes && String(t.notes).trim()) {
+    ctx.font = NOTES_FONT;
+    noteLines = wrapLines(ctx, t.notes, leftW - 80);
+    if (noteLines.length > MAX_NOTES_LINES) {
+      noteLines = noteLines.slice(0, MAX_NOTES_LINES);
+      noteLines[MAX_NOTES_LINES - 1] = noteLines[MAX_NOTES_LINES - 1].replace(/.$/, '…');
+    }
+  }
+  const notesTextTop = NOTES_LABEL_Y + 26;
+  const H = noteLines.length ? Math.max(630, notesTextTop + noteLines.length * NOTES_LH + 44) : 630;
+
   canvas.width = W; canvas.height = H;
 
   // background
@@ -41,23 +72,19 @@ async function draw(canvas, t) {
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
 
-  const shot = (t.screenshots || [])[0];
-  const hasImage = !!shot;
-  const leftW = hasImage ? 680 : W;
-
-  // logo + wordmark
+  // logo + wordmark (larger logo)
   const logo = await loadImage('/pugzilla-logo.jpg');
   if (logo) {
-    roundRect(ctx, 40, 36, 48, 48, 12);
+    roundRect(ctx, 40, 28, 64, 64, 15);
     ctx.save(); ctx.clip();
-    ctx.drawImage(logo, 40, 36, 48, 48);
+    ctx.drawImage(logo, 40, 28, 64, 64);
     ctx.restore();
   }
   ctx.fillStyle = '#e6edf3';
-  ctx.font = '700 24px Arial';
-  ctx.fillText('Pugzilla', 100, 58);
+  ctx.font = '700 27px Arial';
+  ctx.fillText('Pugzilla', 118, 70);
   ctx.fillStyle = '#3b82f6';
-  ctx.fillText('zilla', 100 + ctx.measureText('Pug').width, 58);
+  ctx.fillText('zilla', 118 + ctx.measureText('Pug').width, 70);
 
   ctx.fillStyle = '#8b98a9';
   ctx.font = '14px Arial';
@@ -116,6 +143,16 @@ async function draw(canvas, t) {
     ctx.fillStyle = '#c9d3e0';
     ctx.fillText(tag, tx + 14, 472);
     tx += tw + 10;
+  }
+
+  // notes (wrapped, grows the card downward)
+  if (noteLines.length) {
+    ctx.font = '13px Arial';
+    ctx.fillStyle = '#8b98a9';
+    ctx.fillText('NOTES', 40, NOTES_LABEL_Y);
+    ctx.font = NOTES_FONT;
+    ctx.fillStyle = '#c9d3e0';
+    noteLines.forEach((ln, i) => ctx.fillText(ln, 40, notesTextTop + i * NOTES_LH));
   }
 
   // footer

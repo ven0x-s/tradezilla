@@ -103,8 +103,10 @@ function HoldingTimeChart({ trades }) {
   );
 }
 
-export default function AnalysisView({ trades }) {
+export default function AnalysisView({ trades, playbooks = [] }) {
   if (!trades.length) return <div className="empty-state">No trades match the current filters.</div>;
+
+  const pbName = (id) => (playbooks.find((p) => p.id === id) || {}).name;
 
   const weekdayRows = groupStats(trades, (t) => weekdayOf(t.date))
     .filter((r) => r.key !== 'Unspecified')
@@ -128,6 +130,7 @@ export default function AnalysisView({ trades }) {
       <Table title="By emotion" rows={groupStats(trades, (t) => t.emotion)} />
       <Table title="By direction" rows={groupStats(trades, (t) => (t.direction === 'short' ? 'Short' : 'Long'))} />
       <Table title="By account type" rows={groupStats(trades, (t) => t.accountType)} />
+      <Table title="By playbook" rows={groupStats(trades, (t) => pbName(t.playbookId))} />
       <Table title="By prop firm" rows={groupStats(trades, (t) => t.propFirm)} />
       <Table title="By daily bias" rows={groupStats(trades, (t) => t.dailyBias)} />
       <Table title="By PO3 phase" rows={groupStats(trades, (t) => t.po3)} />

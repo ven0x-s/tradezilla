@@ -47,10 +47,10 @@ button { font-family: inherit; cursor: pointer; }
 .brand { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
 .brand .z { color: var(--accent); }
 .brand-logo {
-  width: 34px; height: 34px; border-radius: 9px; object-fit: cover;
-  box-shadow: 0 0 0 1px var(--border), 0 0 14px rgba(59,130,246,0.45);
+  width: 46px; height: 46px; border-radius: 11px; object-fit: cover;
+  box-shadow: 0 0 0 1px var(--border), 0 0 16px rgba(59,130,246,0.5);
 }
-.login-card .brand-logo { width: 42px; height: 42px; border-radius: 11px; }
+.login-card .brand-logo { width: 56px; height: 56px; border-radius: 14px; }
 .nav { display: flex; gap: 4px; flex-wrap: wrap; }
 .nav button {
   background: transparent; border: none; color: var(--text-dim);
