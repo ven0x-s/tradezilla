@@ -7,6 +7,7 @@ const store = require('./store');
 const tradovate = require('./tradovate');
 const csv = require('./csv');
 const auth = require('./auth');
+const playbooks = require('./playbooks');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -145,6 +146,36 @@ app.post('/api/trades/:id/screenshots', upload.single('file'), (req, res) => {
 app.delete('/api/trades/:id/screenshots/:sid', (req, res) => {
   const ok = store.removeScreenshot(req.params.id, req.params.sid);
   if (!ok) return res.status(404).json({ error: 'not found' });
+  res.json({ ok: true });
+});
+
+// ---- Playbooks ----
+app.get('/api/playbooks', (req, res) => res.json(playbooks.list()));
+app.post('/api/playbooks', (req, res) => res.status(201).json(playbooks.create(req.body || {})));
+app.put('/api/playbooks/:id', (req, res) => {
+  const p = playbooks.update(req.params.id, req.body || {});
+  if (!p) return res.status(404).json({ error: 'not found' });
+  res.json(p);
+});
+app.delete('/api/playbooks/:id', (req, res) => {
+  const p = playbooks.remove(req.params.id);
+  if (!p) return res.status(404).json({ error: 'not found' });
+  (p.screenshots || []).forEach((s) => { try { fs.unlinkSync(path.join(UPLOAD_DIR, s.filename)); } catch {} });
+  res.json({ ok: true });
+});
+app.post('/api/playbooks/:id/screenshots', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no image file' });
+  const shot = playbooks.addScreenshot(req.params.id, req.file.filename, req.body.label);
+  if (!shot) {
+    try { fs.unlinkSync(path.join(UPLOAD_DIR, req.file.filename)); } catch {}
+    return res.status(404).json({ error: 'playbook not found' });
+  }
+  res.status(201).json(shot);
+});
+app.delete('/api/playbooks/:id/screenshots/:sid', (req, res) => {
+  const shot = playbooks.removeScreenshot(req.params.id, req.params.sid);
+  if (!shot) return res.status(404).json({ error: 'not found' });
+  try { fs.unlinkSync(path.join(UPLOAD_DIR, shot.filename)); } catch {}
   res.json({ ok: true });
 });
 

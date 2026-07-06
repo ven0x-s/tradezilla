@@ -190,6 +190,10 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .bias-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
 @media (max-width: 640px) { .bias-compare { grid-template-columns: 1fr; } }
 
+/* Playbook */
+.pb-rules { margin: 10px 0 0; padding-left: 18px; }
+.pb-rules li { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+
 .empty-state { text-align: center; color: var(--text-dim); padding: 60px 20px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--bg-3); border: 1px solid var(--border); padding: 12px 20px; border-radius: 10px; z-index: 200; box-shadow: var(--shadow); }
 .muted { color: var(--text-dim); }

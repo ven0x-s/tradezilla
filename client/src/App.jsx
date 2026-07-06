@@ -11,6 +11,7 @@ import InsightsView from './components/InsightsView.jsx';
 import Login from './components/Login.jsx';
 import ShareCard from './components/ShareCard.jsx';
 import PsychologyView from './components/PsychologyView.jsx';
+import PlaybookView from './components/PlaybookView.jsx';
 import { APP_VERSION } from './helpers.js';
 
 const TABS = [
@@ -20,6 +21,7 @@ const TABS = [
   ['insights', 'Insights'],
   ['analysis', 'Analysis'],
   ['psychology', 'Psychology'],
+  ['playbook', 'Playbook'],
   ['data', 'Data'],
 ];
 
@@ -143,6 +145,7 @@ export default function App() {
             {tab === 'insights' && <InsightsView trades={filtered} />}
             {tab === 'analysis' && <AnalysisView trades={filtered} />}
             {tab === 'psychology' && <PsychologyView trades={filtered} />}
+            {tab === 'playbook' && <PlaybookView trades={trades} notify={notify} />}
             {tab === 'data' && <DataView trades={trades} onChanged={load} notify={notify} />}
           </>
         )}

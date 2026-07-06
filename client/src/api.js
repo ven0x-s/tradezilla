@@ -35,4 +35,15 @@ export const api = {
   tvTest: () => req('/api/tradovate/test', { method: 'POST', headers: J, body: '{}' }),
   tvSync: (date) => req('/api/tradovate/sync', { method: 'POST', headers: J, body: JSON.stringify({ date }) }),
   restore: (trades) => req('/api/restore', { method: 'POST', headers: J, body: JSON.stringify({ trades }) }),
+  listPlaybooks: () => req('/api/playbooks'),
+  createPlaybook: (p) => req('/api/playbooks', { method: 'POST', headers: J, body: JSON.stringify(p) }),
+  updatePlaybook: (id, p) => req('/api/playbooks/' + id, { method: 'PUT', headers: J, body: JSON.stringify(p) }),
+  deletePlaybook: (id) => req('/api/playbooks/' + id, { method: 'DELETE' }),
+  uploadPlaybookShot: (id, file, label) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('label', label || '');
+    return req('/api/playbooks/' + id + '/screenshots', { method: 'POST', body: fd });
+  },
+  deletePlaybookShot: (id, sid) => req('/api/playbooks/' + id + '/screenshots/' + sid, { method: 'DELETE' }),
 };
