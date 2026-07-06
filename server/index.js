@@ -153,7 +153,7 @@ const CSV_COLUMNS = [
   'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'contracts',
   'stopLoss', 'takeProfit', 'pointValue', 'commissions', 'resultPoints',
   'resultDollars', 'riskDollars', 'rMultiple', 'holdingMinutes', 'setup', 'model',
-  'entryModel', 'htfDelivery', 'newsEvent', 'emotionEntry', 'emotionExit', 'mistake',
+  'entryModel', 'htfDelivery', 'newsEvent', 'grade', 'emotionEntry', 'emotionExit', 'mistake',
   'session', 'notes',
 ];
 
@@ -188,6 +188,7 @@ app.post('/api/import/csv', (req, res) => {
     entryModel: o.entryModel ?? o.EntryModel ?? o['Entry model'] ?? '',
     htfDelivery: o.htfDelivery ?? o.HtfDelivery ?? o['HTF delivery'] ?? '',
     newsEvent: o.newsEvent ?? o.NewsEvent ?? o['News event'] ?? o.News ?? '',
+    grade: o.grade ?? o.Grade ?? '',
     exitTime: o.exitTime ?? o['Exit time'] ?? '',
     emotionEntry: o.emotionEntry ?? o['Entry emotion'] ?? '',
     emotionExit: o.emotionExit ?? o['Exit emotion'] ?? '',

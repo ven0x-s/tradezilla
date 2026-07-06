@@ -73,13 +73,18 @@ export default function PsychologyView({ trades }) {
   const exitRows = groupStats(trades, (t) => t.emotionExit || 'Untagged');
   const mistakeRows = groupStats(trades, (t) => t.mistake || 'None').filter((r) => r.key !== 'None');
   const allMistakeRows = groupStats(trades, (t) => t.mistake || 'None');
+  const gradeRows = groupStats(trades, (t) => t.grade || 'Ungraded').sort((a, b) => a.key.localeCompare(b.key));
 
   return (
     <div>
-      <Insights emotionRows={entryRows.filter((r) => r.key !== 'Untagged')} mistakeRows={mistakeRows} />
+      <Insights
+        emotionRows={entryRows.filter((r) => r.key !== 'Untagged')}
+        mistakeRows={[...mistakeRows, ...gradeRows.filter((r) => r.key !== 'Ungraded')]}
+      />
       <Table title="By emotion at entry" rows={entryRows} />
       <Table title="By emotion at exit" rows={exitRows} />
       <Table title="By mental mistake" rows={allMistakeRows} />
+      <Table title="By grade" rows={gradeRows} />
     </div>
   );
 }

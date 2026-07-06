@@ -10,12 +10,44 @@ const MISTAKES = [
   'Te vroeg ingestapt (FOMO entry)', 'Winst te vroeg genomen', 'Verlies te lang laten lopen',
   'Geen stoploss gezet', 'Revenge trade na verlies', 'Overtraded (te veel trades)', 'Tegen HTF bias in',
 ];
+const GRADES = [
+  ['A', 'A — Excellent'], ['B', 'B — Good'], ['C', 'C — Average'], ['D', 'D — Below average'], ['F', 'F — Poor'],
+];
+
+// Dropdown with a quick-pick list plus a free-text "Other…" fallback,
+// so a custom value (e.g. a custom emotion) can still be typed in.
+function ChoiceField({ label, value, options, onChange, placeholder, full }) {
+  const [customMode, setCustomMode] = useState(!!value && !options.includes(value));
+  const selectValue = customMode ? '__other__' : (value || '');
+  return (
+    <div className={'field' + (full ? ' full' : '')}>
+      <label>{label}</label>
+      <select
+        value={selectValue}
+        onChange={(e) => {
+          if (e.target.value === '__other__') { setCustomMode(true); onChange(''); }
+          else { setCustomMode(false); onChange(e.target.value); }
+        }}
+      >
+        <option value="">- none -</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        <option value="__other__">Other…</option>
+      </select>
+      {customMode && (
+        <input
+          autoFocus value={value || ''} onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder} style={{ marginTop: 8 }}
+        />
+      )}
+    </div>
+  );
+}
 
 const blank = () => ({
   date: todayISO(), time: '', exitTime: '', symbol: 'NQ', direction: 'long',
   entry: '', exit: '', contracts: '1', stopLoss: '', takeProfit: '',
   pointValue: String(defaultPointValue('NQ')), commissions: '', setup: '',
-  model: '', entryModel: '', htfDelivery: '', newsEvent: '',
+  model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '',
   emotionEntry: '', emotionExit: '', mistake: '',
   session: 'NY', notes: '', screenshots: [],
 });
@@ -177,46 +209,25 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
               <label>HTF delivery</label>
               <input value={form.htfDelivery || ''} onChange={(e) => set('htfDelivery', e.target.value)} placeholder="e.g. bullish, bearish" />
             </div>
-            <div className="field full">
-              <label>News (red folder)</label>
-              <div className="chip-row">
-                {QUICK_NEWS.map((n) => (
-                  <button
-                    key={n} type="button"
-                    className={'chip news' + (form.newsEvent === n ? ' active' : '')}
-                    onClick={() => set('newsEvent', form.newsEvent === n ? '' : n)}
-                  >{n}</button>
-                ))}
-              </div>
-              <input
-                value={form.newsEvent || ''} onChange={(e) => set('newsEvent', e.target.value)}
-                placeholder="Other event, or leave blank for no news" style={{ marginTop: 8 }}
-              />
+            <div className="field">
+              <label>Grade</label>
+              <select value={form.grade || ''} onChange={(e) => set('grade', e.target.value)}>
+                <option value="">- none -</option>
+                {GRADES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
             </div>
-            <div className="field full">
-              <label>Emotion at entry</label>
-              <div className="chip-row">
-                {QUICK_EMOTIONS.map((n) => (
-                  <button
-                    key={n} type="button"
-                    className={'chip' + (form.emotionEntry === n ? ' active' : '')}
-                    onClick={() => set('emotionEntry', form.emotionEntry === n ? '' : n)}
-                  >{n}</button>
-                ))}
-              </div>
-            </div>
-            <div className="field full">
-              <label>Emotion at exit</label>
-              <div className="chip-row">
-                {QUICK_EMOTIONS.map((n) => (
-                  <button
-                    key={n} type="button"
-                    className={'chip' + (form.emotionExit === n ? ' active' : '')}
-                    onClick={() => set('emotionExit', form.emotionExit === n ? '' : n)}
-                  >{n}</button>
-                ))}
-              </div>
-            </div>
+            <ChoiceField
+              label="News (red folder)" value={form.newsEvent} options={QUICK_NEWS}
+              onChange={(v) => set('newsEvent', v)} placeholder="Custom news event"
+            />
+            <ChoiceField
+              label="Emotion at entry" value={form.emotionEntry} options={QUICK_EMOTIONS}
+              onChange={(v) => set('emotionEntry', v)} placeholder="Custom emotion"
+            />
+            <ChoiceField
+              label="Emotion at exit" value={form.emotionExit} options={QUICK_EMOTIONS}
+              onChange={(v) => set('emotionExit', v)} placeholder="Custom emotion"
+            />
             <div className="field full">
               <label>Mental mistake</label>
               <select value={form.mistake || ''} onChange={(e) => set('mistake', e.target.value)}>

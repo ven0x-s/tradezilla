@@ -6,7 +6,7 @@ const COLS = [
   ['entry', 'Entry'], ['exit', 'Exit'], ['contracts', 'Qty'],
   ['resultPoints', 'Pts'], ['resultDollars', 'P&L'], ['rMultiple', 'R'],
   ['setup', 'Setup'], ['model', 'Model'], ['entryModel', 'Entry model'],
-  ['htfDelivery', 'HTF delivery'], ['newsEvent', 'News'],
+  ['htfDelivery', 'HTF delivery'], ['newsEvent', 'News'], ['grade', 'Grade'],
   ['emotionEntry', 'Emotion in'], ['emotionExit', 'Emotion out'], ['mistake', 'Mistake'],
   ['session', 'Session'],
 ];
@@ -66,6 +66,7 @@ export default function TradesView({ trades, onEdit, onDelete, onShare }) {
               <td>{t.entryModel || '-'}</td>
               <td>{t.htfDelivery || '-'}</td>
               <td>{t.newsEvent ? <span className="tag news">{t.newsEvent}</span> : '-'}</td>
+              <td>{t.grade ? <span className="tag grade">{t.grade}</span> : '-'}</td>
               <td>{t.emotionEntry || '-'}</td>
               <td>{t.emotionExit || '-'}</td>
               <td>{t.mistake ? <span className="tag mistake">{t.mistake}</span> : '-'}</td>
