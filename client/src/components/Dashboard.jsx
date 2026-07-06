@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
-import { computeStats, equitySeries, maxDrawdown, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
+import { computeStats, equitySeries, maxDrawdown, groupStats, accountTypesPresent, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
+import SetupPerformance from './SetupPerformance.jsx';
+import AccountCompare from './AccountCompare.jsx';
 
 function Stat({ label, value, sub, cls }) {
   return (
@@ -13,17 +15,43 @@ function Stat({ label, value, sub, cls }) {
 }
 
 export default function Dashboard({ trades }) {
-  const s = computeStats(trades);
-  const eq = equitySeries(trades);
-  const pf = s.profitFactor === Infinity ? '∞' : fmtNum(s.profitFactor, 2);
-  const maxDd = maxDrawdown(eq);
+  const [acctMode, setAcctMode] = useState('all');
+  const present = accountTypesPresent(trades);
 
   if (!trades.length) {
     return <div className="empty-state">No trades match the current filters. Add a trade to get started.</div>;
   }
 
+  const view = (acctMode === 'all' || acctMode === 'compare')
+    ? trades
+    : trades.filter((t) => t.accountType === acctMode);
+  const s = computeStats(view);
+  const eq = equitySeries(view);
+  const pf = s.profitFactor === Infinity ? '∞' : fmtNum(s.profitFactor, 2);
+  const maxDd = maxDrawdown(eq);
+  const po3Rows = groupStats(view, (t) => t.po3);
+
   return (
     <div>
+      {present.length > 0 && (
+        <div className="acct-toggle">
+          <span className="hint" style={{ marginRight: 4 }}>Account:</span>
+          <button className={acctMode === 'all' ? 'active' : ''} onClick={() => setAcctMode('all')}>All combined</button>
+          {present.map((a) => (
+            <button key={a} className={acctMode === a ? 'active' : ''} onClick={() => setAcctMode(a)}>{a}</button>
+          ))}
+          <button className={acctMode === 'compare' ? 'active' : ''} onClick={() => setAcctMode('compare')}>Compare side by side</button>
+        </div>
+      )}
+
+      {acctMode === 'compare' && (
+        <>
+          <div className="section-title">Account comparison</div>
+          <AccountCompare trades={trades} />
+          <div style={{ marginTop: 8 }} />
+        </>
+      )}
+
       <div className="grid stat-grid">
         <Stat label="Total P&L" value={fmtUSD(s.totalPnl)} cls={pnlClass(s.totalPnl)} sub={`${s.count} trades`} />
         <Stat label="Win rate" value={fmtNum(s.winRate, 1) + '%'} sub={`${s.winCount}W / ${s.lossCount}L`} />
@@ -73,6 +101,33 @@ export default function Dashboard({ trades }) {
                 <Area type="monotone" dataKey="drawdown" stroke="#ef4444" fill="rgba(239,68,68,0.25)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+        </>
+      )}
+
+      <div className="section-title">Setup performance</div>
+      <SetupPerformance trades={view} />
+
+      {po3Rows.length > 0 && (
+        <>
+          <div className="section-title">PO3 phase</div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Phase</th><th className="num">Trades</th><th className="num">Win %</th><th className="num">P&L</th><th className="num">Avg R</th></tr>
+              </thead>
+              <tbody>
+                {po3Rows.map((r) => (
+                  <tr key={r.key}>
+                    <td><span className="tag">{r.key}</span></td>
+                    <td className="num">{r.count}</td>
+                    <td className="num">{fmtNum(r.winRate, 1)}%</td>
+                    <td className={'num ' + pnlClass(r.totalPnl)}>{fmtUSD(r.totalPnl)}</td>
+                    <td className={'num ' + pnlClass(r.avgR)}>{r.avgR == null ? '-' : fmtNum(r.avgR, 2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </>
       )}

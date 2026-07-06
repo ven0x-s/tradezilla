@@ -1,6 +1,18 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { api } from '../api.js';
-import { previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, EMOTIONS, todayISO } from '../helpers.js';
+import {
+  previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, EMOTIONS, todayISO,
+  ICT_SETUPS, DAILY_BIAS, HTF_PDA, DRAW_ON_LIQUIDITY, PO3_PHASES, ACCOUNT_TYPES,
+  isTradingViewUrl, setupTagsOf,
+} from '../helpers.js';
+
+const CUSTOM_SETUPS_KEY = 'pug_custom_setups';
+function loadCustomSetups() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_SETUPS_KEY)) || []; } catch { return []; }
+}
+function saveCustomSetups(list) {
+  try { localStorage.setItem(CUSTOM_SETUPS_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+}
 
 const QUICK_SYMBOLS = ['NQ', 'ES', 'MNQ', 'MES'];
 const QUICK_NEWS = ['CPI', 'NFP', 'FOMC', 'PMI', 'PCE', 'GDP', 'Retail Sales', 'Jobless Claims', 'ISM', 'Fed speech'];
@@ -46,17 +58,79 @@ const blank = () => ({
   pointValue: String(defaultPointValue('NQ')), commissions: '', setup: '',
   model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '',
   emotionEntry: '', emotionExit: '', mistake: '',
-  session: 'NY', notes: '', rating: '', planFollowed: false, emotion: '', mistakes: '', screenshots: [],
+  session: 'NY', notes: '', rating: '', planFollowed: false, emotion: '', mistakes: '',
+  setupTags: [], dailyBias: '', htfPda: '', drawOnLiquidity: '', narrative: '', po3: '',
+  tvUrl: '', accountType: '', propFirm: '', rulesFollowed: true, ruleBroken: '',
+  screenshots: [],
 });
+
+// Multi-select chips for ICT setups + free-text custom labels remembered in localStorage.
+function SetupTagsField({ value, onChange, tagRefs }) {
+  const [custom, setCustom] = useState(() => loadCustomSetups());
+  const [text, setText] = useState('');
+  const selected = Array.isArray(value) ? value : [];
+  const all = [...ICT_SETUPS, ...custom.filter((c) => !ICT_SETUPS.includes(c))];
+
+  function toggle(tag) {
+    onChange(selected.includes(tag) ? selected.filter((t) => t !== tag) : [...selected, tag]);
+  }
+  function addCustom() {
+    const t = text.trim();
+    if (!t) return;
+    if (!all.includes(t)) { const next = [...custom, t]; setCustom(next); saveCustomSetups(next); }
+    if (!selected.includes(t)) onChange([...selected, t]);
+    setText('');
+  }
+  return (
+    <div className="field full">
+      <label>Setup tags (ICT)</label>
+      <div className="chip-row">
+        {all.map((tag, i) => (
+          <button
+            key={tag} type="button"
+            ref={(el) => { if (tagRefs) tagRefs.current[i] = () => toggle(tag); }}
+            className={'chip' + (selected.includes(tag) ? ' active' : '')}
+            onClick={() => toggle(tag)}
+          >{i < 9 ? <span className="chip-idx">{i + 1}</span> : null}{tag}</button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <input
+          value={text} onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
+          placeholder="Add your own setup label…"
+        />
+        <button type="button" className="btn ghost" onClick={addCustom}>Add</button>
+      </div>
+    </div>
+  );
+}
 
 export default function TradeForm({ trade, onClose, onSaved, notify }) {
   const [form, setForm] = useState(() => (trade ? normalize(trade) : blank()));
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState(null);
   const fileRef = useRef();
+  const tagRefs = useRef({});
   const isEditing = !!form.id;
 
   const preview = useMemo(() => previewMetrics(form), [form]);
+  const tvValid = isTradingViewUrl(form.tvUrl);
+
+  // Digit keys 1-9 quick-toggle the matching setup tag, unless typing in a field.
+  useEffect(() => {
+    function onKey(e) {
+      const el = document.activeElement;
+      const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
+      if (typing) return;
+      if (e.key >= '1' && e.key <= '9') {
+        const fn = tagRefs.current[Number(e.key) - 1];
+        if (fn) { e.preventDefault(); fn(); }
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   function set(k, v) {
     setForm((f) => {
@@ -70,6 +144,7 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
 
   async function save() {
     if (!form.date) return notify('Date is required');
+    if (!isTradingViewUrl(form.tvUrl)) return notify('TradingView URL must be a tradingview.com link');
     setSaving(true);
     try {
       const payload = stripComputed(form);
@@ -231,7 +306,7 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
             </div>
             <div className="field">
               <label>Rating</label>
-              <input value={form.rating || ''} onChange={(e) => set('rating', e.target.value)} placeholder="e.g. \u2605\u2605\u2605\u2605, A+, 8/10" />
+              <input value={form.rating || ''} onChange={(e) => set('rating', e.target.value)} placeholder="e.g. ****, A+, 8/10" />
             </div>
             <div className="field">
               <label>Emotion</label>
@@ -251,6 +326,77 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
               <label>Mistakes (comma separated)</label>
               <input value={form.mistakes || ''} onChange={(e) => set('mistakes', e.target.value)} placeholder="e.g. moved stop, chased entry" />
             </div>
+
+            <div className="field full"><div className="form-section">ICT setup &amp; HTF context</div></div>
+            <SetupTagsField value={form.setupTags} onChange={(v) => set('setupTags', v)} tagRefs={tagRefs} />
+            <div className="field">
+              <label>Daily bias</label>
+              <select value={form.dailyBias || ''} onChange={(e) => set('dailyBias', e.target.value)}>
+                <option value="">-</option>
+                {DAILY_BIAS.map((b) => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>HTF PDA</label>
+              <select value={form.htfPda || ''} onChange={(e) => set('htfPda', e.target.value)}>
+                <option value="">-</option>
+                {HTF_PDA.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>PO3 phase</label>
+              <select value={form.po3 || ''} onChange={(e) => set('po3', e.target.value)}>
+                <option value="">-</option>
+                {PO3_PHASES.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <ChoiceField
+              label="Draw on liquidity" value={form.drawOnLiquidity} options={DRAW_ON_LIQUIDITY}
+              onChange={(v) => set('drawOnLiquidity', v)} placeholder="Custom target"
+            />
+            <div className="field full">
+              <label>Narrative</label>
+              <textarea rows="2" value={form.narrative || ''} onChange={(e) => set('narrative', e.target.value)} placeholder="The story you were playing" />
+            </div>
+            <div className="field full">
+              <label>TradingView chart URL</label>
+              <input
+                value={form.tvUrl || ''} onChange={(e) => set('tvUrl', e.target.value)}
+                placeholder="https://www.tradingview.com/x/…"
+                style={!tvValid ? { borderColor: 'var(--neg)' } : undefined}
+              />
+              {!tvValid && <div className="hint" style={{ color: 'var(--neg)' }}>Must be a tradingview.com link</div>}
+              {tvValid && form.tvUrl && (
+                <a className="hint" href={form.tvUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Open chart ↗</a>
+              )}
+            </div>
+
+            <div className="field full"><div className="form-section">Account &amp; playbook</div></div>
+            <div className="field">
+              <label>Account type</label>
+              <select value={form.accountType || ''} onChange={(e) => set('accountType', e.target.value)}>
+                <option value="">-</option>
+                {ACCOUNT_TYPES.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <ChoiceField
+              label="Prop firm" value={form.propFirm} options={['Topstep', 'Apex', 'TPT', 'MFFU', 'FTMO']}
+              onChange={(v) => set('propFirm', v)} placeholder="Custom firm"
+            />
+            <div className="field">
+              <label>Rules followed</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, height: 38 }}>
+                <input type="checkbox" style={{ width: 18, height: 18 }} checked={!!form.rulesFollowed} onChange={(e) => set('rulesFollowed', e.target.checked)} />
+                <span className="hint">{form.rulesFollowed ? 'Yes' : 'No'}</span>
+              </label>
+            </div>
+            {!form.rulesFollowed && (
+              <div className="field full">
+                <label>Which rule was broken?</label>
+                <input value={form.ruleBroken || ''} onChange={(e) => set('ruleBroken', e.target.value)} placeholder="e.g. entered before confirmation" />
+              </div>
+            )}
+
             <div className="field full">
               <label>Notes</label>
               <textarea rows="2" value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} />
@@ -306,6 +452,7 @@ function normalize(t) {
     o[k] = t[k] == null ? '' : String(t[k]);
   });
   o.screenshots = t.screenshots || [];
+  o.setupTags = setupTagsOf(t);
   return o;
 }
 

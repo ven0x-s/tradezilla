@@ -99,6 +99,9 @@ const FIELDS = [
   'emotionEntry', 'emotionExit', 'mistake',
   'session', 'notes', 'source', 'sourceId',
   'rating', 'planFollowed', 'emotion', 'mistakes',
+  // ICT / HTF / prop-firm / playbook fields (all optional, backwards compatible)
+  'setupTags', 'dailyBias', 'htfPda', 'drawOnLiquidity', 'narrative', 'po3',
+  'tvUrl', 'accountType', 'propFirm', 'rulesFollowed', 'ruleBroken', 'playbookId',
 ];
 
 function sanitize(input) {
@@ -222,6 +225,19 @@ function makeBackup() {
 function findBySourceId(sourceId) {
   return readAll().find((x) => x.sourceId === sourceId) || null;
 }
+
+// One-time safety backup when upgrading to a schema that adds new optional
+// fields. New fields are null-tolerant so no data is rewritten; this just
+// guarantees a restore point exists before the new version runs.
+const SCHEMA_MARKER = path.join(DATA_DIR, '.schema-v2');
+function migrateIfNeeded() {
+  try {
+    if (fs.existsSync(SCHEMA_MARKER)) return;
+    if (readAll().length > 0) makeBackup();
+    fs.writeFileSync(SCHEMA_MARKER, new Date().toISOString());
+  } catch { /* non-fatal */ }
+}
+migrateIfNeeded();
 
 module.exports = {
   DEFAULT_POINT_VALUES, defaultPointValue, computeMetrics,

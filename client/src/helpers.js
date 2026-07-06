@@ -221,6 +221,74 @@ export function disciplineSplit(trades) {
 
 export const EMOTIONS = ['Disciplined', 'Confident', 'Calm', 'FOMO', 'Revenge', 'Anxious', 'Bored', 'Greedy'];
 
+// ---- ICT / HTF / prop-firm option lists ----
+export const ICT_SETUPS = [
+  'FVG', 'Order Block', 'Breaker', 'MSS', 'CHoCH', 'CISD', 'Liquidity Sweep',
+  'Silver Bullet', 'Unicorn', 'Turtle Soup', 'Judas Swing', 'TGIF', 'OTE', 'One Shot One Kill',
+];
+export const DAILY_BIAS = ['Bullish', 'Bearish', 'Neutral'];
+export const HTF_PDA = ['Premium', 'Discount', 'Equilibrium'];
+export const DRAW_ON_LIQUIDITY = ['PDH', 'PDL', 'PWH', 'PWL', 'Weekly open', 'Monthly open'];
+export const PO3_PHASES = ['Accumulation', 'Manipulation', 'Distribution'];
+export const ACCOUNT_TYPES = ['Personal', 'Eval', 'Demo Funded', 'Live Funded'];
+
+// Whether the trade direction aligned with the stated daily bias.
+// 'with' = long+bullish or short+bearish, 'against' = the opposite, null = neutral/unknown.
+export function biasAlignment(t) {
+  const b = String(t.dailyBias || '').toLowerCase();
+  if (b === 'bullish') return t.direction === 'long' ? 'with' : 'against';
+  if (b === 'bearish') return t.direction === 'short' ? 'with' : 'against';
+  return null;
+}
+
+// Normalise setupTags to an array regardless of how it was stored (array, ';'/',' string, or empty).
+export function setupTagsOf(t) {
+  if (Array.isArray(t.setupTags)) return t.setupTags.filter(Boolean);
+  if (typeof t.setupTags === 'string' && t.setupTags.trim()) {
+    return t.setupTags.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+export function isTradingViewUrl(url) {
+  if (!url) return true; // empty is allowed
+  try {
+    const u = new URL(url);
+    return /(^|\.)tradingview\.com$/i.test(u.hostname) && (u.protocol === 'https:' || u.protocol === 'http:');
+  } catch {
+    return false;
+  }
+}
+
+export const APP_VERSION = '2.0.0';
+
+// Per setup-tag stats. A trade with multiple tags counts toward each of them.
+export function setupTagStats(trades) {
+  const groups = {};
+  for (const t of trades) {
+    for (const tag of setupTagsOf(t)) (groups[tag] = groups[tag] || []).push(t);
+  }
+  return Object.entries(groups)
+    .map(([key, arr]) => ({ key, ...computeStats(arr) }))
+    .sort((a, b) => b.totalPnl - a.totalPnl);
+}
+
+// Split trades into "with HTF bias" vs "against HTF bias" (see biasAlignment).
+export function biasSplit(trades) {
+  const withB = trades.filter((t) => biasAlignment(t) === 'with');
+  const against = trades.filter((t) => biasAlignment(t) === 'against');
+  return {
+    withStats: computeStats(withB), againstStats: computeStats(against),
+    withN: withB.length, againstN: against.length,
+  };
+}
+
+export const ACCOUNT_ORDER = ACCOUNT_TYPES;
+export function accountTypesPresent(trades) {
+  const set = new Set(trades.map((t) => t.accountType).filter(Boolean));
+  return ACCOUNT_ORDER.filter((a) => set.has(a));
+}
+
 // Per-tag stats for a free-text, comma-separated "mistakes" field, so multiple
 // mistakes on one trade are each counted (unlike the single-select `mistake`).
 export function mistakeTagStats(trades) {

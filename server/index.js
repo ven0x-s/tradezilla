@@ -155,10 +155,15 @@ const CSV_COLUMNS = [
   'resultDollars', 'riskDollars', 'rMultiple', 'holdingMinutes', 'setup', 'model',
   'entryModel', 'htfDelivery', 'newsEvent', 'grade', 'emotionEntry', 'emotionExit', 'mistake',
   'emotion', 'mistakes', 'rating', 'planFollowed', 'session', 'notes',
+  'setupTags', 'dailyBias', 'htfPda', 'drawOnLiquidity', 'narrative', 'po3',
+  'tvUrl', 'accountType', 'propFirm', 'rulesFollowed', 'ruleBroken',
 ];
 
 app.get('/api/export/csv', (req, res) => {
-  const trades = store.listTrades();
+  const trades = store.listTrades().map((t) => ({
+    ...t,
+    setupTags: Array.isArray(t.setupTags) ? t.setupTags.join('; ') : (t.setupTags || ''),
+  }));
   const text = csv.stringify(trades, CSV_COLUMNS);
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="trades.csv"');
@@ -197,6 +202,17 @@ app.post('/api/import/csv', (req, res) => {
     mistakes: o.mistakes ?? o.Mistakes ?? '',
     rating: o.rating ?? o.Rating ?? '',
     planFollowed: o.planFollowed ?? o['Plan followed'] ?? '',
+    setupTags: (o.setupTags ?? o.SetupTags ?? o['Setup tags'] ?? '').split(/[;,]/).map((s) => s.trim()).filter(Boolean),
+    dailyBias: o.dailyBias ?? o['Daily bias'] ?? '',
+    htfPda: o.htfPda ?? o['HTF PDA'] ?? '',
+    drawOnLiquidity: o.drawOnLiquidity ?? o['Draw on liquidity'] ?? '',
+    narrative: o.narrative ?? o.Narrative ?? '',
+    po3: o.po3 ?? o.PO3 ?? '',
+    tvUrl: o.tvUrl ?? o['TradingView URL'] ?? '',
+    accountType: o.accountType ?? o['Account type'] ?? '',
+    propFirm: o.propFirm ?? o['Prop firm'] ?? '',
+    rulesFollowed: o.rulesFollowed ?? o['Rules followed'] ?? '',
+    ruleBroken: o.ruleBroken ?? o['Rule broken'] ?? '',
     session: o.session ?? o.Session ?? '',
     notes: o.notes ?? o.Notes ?? '',
   }));

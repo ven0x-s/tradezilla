@@ -11,6 +11,7 @@ import InsightsView from './components/InsightsView.jsx';
 import Login from './components/Login.jsx';
 import ShareCard from './components/ShareCard.jsx';
 import PsychologyView from './components/PsychologyView.jsx';
+import { APP_VERSION } from './helpers.js';
 
 const TABS = [
   ['dashboard', 'Dashboard'],
@@ -157,6 +158,7 @@ export default function App() {
       )}
       {sharing && <ShareCard trade={sharing} onClose={() => setSharing(null)} />}
       {toast && <div className="toast">{toast}</div>}
+      <footer className="app-footer">Pugzilla v{APP_VERSION}</footer>
     </div>
   );
 }
