@@ -7,6 +7,7 @@ import TradeForm from './components/TradeForm.jsx';
 import CalendarView from './components/CalendarView.jsx';
 import AnalysisView from './components/AnalysisView.jsx';
 import DataView from './components/DataView.jsx';
+import InsightsView from './components/InsightsView.jsx';
 import Login from './components/Login.jsx';
 import ShareCard from './components/ShareCard.jsx';
 import PsychologyView from './components/PsychologyView.jsx';
@@ -15,6 +16,7 @@ const TABS = [
   ['dashboard', 'Dashboard'],
   ['trades', 'Trades'],
   ['calendar', 'Calendar'],
+  ['insights', 'Insights'],
   ['analysis', 'Analysis'],
   ['psychology', 'Psychology'],
   ['data', 'Data'],
@@ -137,6 +139,7 @@ export default function App() {
             {tab === 'dashboard' && <Dashboard trades={filtered} />}
             {tab === 'trades' && <TradesView trades={filtered} onEdit={setEditing} onDelete={del} onShare={setSharing} />}
             {tab === 'calendar' && <CalendarView trades={filtered} />}
+            {tab === 'insights' && <InsightsView trades={filtered} />}
             {tab === 'analysis' && <AnalysisView trades={filtered} />}
             {tab === 'psychology' && <PsychologyView trades={filtered} />}
             {tab === 'data' && <DataView trades={trades} onChanged={load} notify={notify} />}

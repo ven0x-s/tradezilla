@@ -98,6 +98,7 @@ const FIELDS = [
   'model', 'entryModel', 'htfDelivery', 'newsEvent', 'grade',
   'emotionEntry', 'emotionExit', 'mistake',
   'session', 'notes', 'source', 'sourceId',
+  'rating', 'planFollowed', 'emotion', 'mistakes',
 ];
 
 function sanitize(input) {

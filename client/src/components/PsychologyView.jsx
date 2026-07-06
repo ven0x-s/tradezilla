@@ -1,5 +1,5 @@
 import React from 'react';
-import { groupStats, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
+import { groupStats, fmtUSD, fmtNum, pnlClass, mistakeTagStats } from '../helpers.js';
 
 function Table({ title, rows }) {
   if (!rows.length) return null;
@@ -74,6 +74,9 @@ export default function PsychologyView({ trades }) {
   const mistakeRows = groupStats(trades, (t) => t.mistake || 'None').filter((r) => r.key !== 'None');
   const allMistakeRows = groupStats(trades, (t) => t.mistake || 'None');
   const gradeRows = groupStats(trades, (t) => t.grade || 'Ungraded').sort((a, b) => a.key.localeCompare(b.key));
+  const ratingRows = groupStats(trades, (t) => (t.rating ? '★'.repeat(Number(t.rating)) : 'Unrated'))
+    .sort((a, b) => b.key.length - a.key.length);
+  const mistakeTagRows = mistakeTagStats(trades);
 
   return (
     <div>
@@ -84,7 +87,9 @@ export default function PsychologyView({ trades }) {
       <Table title="By emotion at entry" rows={entryRows} />
       <Table title="By emotion at exit" rows={exitRows} />
       <Table title="By mental mistake" rows={allMistakeRows} />
+      <Table title="By mistake tag" rows={mistakeTagRows} />
       <Table title="By grade" rows={gradeRows} />
+      <Table title="By rating" rows={ratingRows} />
     </div>
   );
 }

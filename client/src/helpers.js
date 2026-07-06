@@ -109,3 +109,128 @@ export function previewMetrics(t) {
   }
   return { points, dollars, r, risk, pv };
 }
+
+// ---- Insights computations ----
+export function drawdownSeries(trades) {
+  const eq = equitySeries(trades);
+  let peak = 0, maxDD = 0;
+  const series = eq.map((p) => {
+    peak = Math.max(peak, p.equity);
+    const dd = p.equity - peak;
+    if (dd < maxDD) maxDD = dd;
+    return { i: p.i, dd: +dd.toFixed(2), equity: p.equity };
+  });
+  return { series, maxDD: +maxDD.toFixed(2) };
+}
+
+function chrono(trades) {
+  return trades.filter((t) => t.resultDollars != null)
+    .slice().sort((a, b) => ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')));
+}
+
+export function streaks(trades) {
+  const c = chrono(trades);
+  let longestWin = 0, longestLoss = 0, curType = null, curLen = 0;
+  let lw = 0, ll = 0;
+  for (const t of c) {
+    const w = t.resultDollars > 0;
+    const type = t.resultDollars === 0 ? 'flat' : (w ? 'win' : 'loss');
+    if (type === curType) curLen += 1; else { curType = type; curLen = 1; }
+    if (type === 'win') { lw += 1; ll = 0; longestWin = Math.max(longestWin, lw); }
+    else if (type === 'loss') { ll += 1; lw = 0; longestLoss = Math.max(longestLoss, ll); }
+    else { lw = 0; ll = 0; }
+  }
+  return { longestWin, longestLoss, current: { type: curType, len: curLen } };
+}
+
+export function rHistogram(trades) {
+  const buckets = [
+    { label: '< -2R', min: -Infinity, max: -2 },
+    { label: '-2..-1R', min: -2, max: -1 },
+    { label: '-1..0R', min: -1, max: 0 },
+    { label: '0..1R', min: 0, max: 1 },
+    { label: '1..2R', min: 1, max: 2 },
+    { label: '2..3R', min: 2, max: 3 },
+    { label: '> 3R', min: 3, max: Infinity },
+  ];
+  const out = buckets.map((b) => ({ label: b.label, count: 0 }));
+  for (const t of trades) {
+    if (t.rMultiple == null) continue;
+    const i = buckets.findIndex((b) => t.rMultiple >= b.min && t.rMultiple < b.max);
+    if (i >= 0) out[i].count += 1;
+  }
+  return out;
+}
+
+export function byHour(trades) {
+  const m = {};
+  for (const t of trades) {
+    if (t.resultDollars == null || !t.time) continue;
+    const h = parseInt(String(t.time).slice(0, 2), 10);
+    if (isNaN(h)) continue;
+    (m[h] = m[h] || { pnl: 0, count: 0 });
+    m[h].pnl += t.resultDollars; m[h].count += 1;
+  }
+  return Array.from({ length: 24 }, (_, h) => ({ hour: h, pnl: +(m[h]?.pnl || 0).toFixed(2), count: m[h]?.count || 0 }));
+}
+
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export function byWeekday(trades) {
+  const m = {};
+  for (const t of trades) {
+    if (t.resultDollars == null || !t.date) continue;
+    const d = new Date(t.date + 'T00:00:00').getDay();
+    (m[d] = m[d] || { pnl: 0, count: 0 });
+    m[d].pnl += t.resultDollars; m[d].count += 1;
+  }
+  // Mon..Sun order
+  return [1, 2, 3, 4, 5, 6, 0].map((d) => ({ day: WD[d], pnl: +(m[d]?.pnl || 0).toFixed(2), count: m[d]?.count || 0 }));
+}
+
+// Flag days with revenge trading (a trade taken after 2+ consecutive losses that day)
+// or overtrading (more than `maxPerDay` trades).
+export function tiltFlags(trades, maxPerDay = 6) {
+  const byDay = {};
+  for (const t of trades) {
+    if (t.resultDollars == null || !t.date) continue;
+    (byDay[t.date] = byDay[t.date] || []).push(t);
+  }
+  const flags = [];
+  for (const [date, arr] of Object.entries(byDay)) {
+    arr.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const reasons = [];
+    if (arr.length > maxPerDay) reasons.push(arr.length + ' trades');
+    let loseRun = 0, revenge = false;
+    for (const t of arr) {
+      if (loseRun >= 2) revenge = true;
+      if (t.resultDollars < 0) loseRun += 1; else if (t.resultDollars > 0) loseRun = 0;
+    }
+    if (revenge) reasons.push('revenge after losses');
+    const pnl = arr.reduce((s, t) => s + t.resultDollars, 0);
+    if (reasons.length) flags.push({ date, reasons, pnl: +pnl.toFixed(2), count: arr.length });
+  }
+  return flags.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+// Win rate / expectancy split by whether the plan was followed.
+export function disciplineSplit(trades) {
+  const yes = trades.filter((t) => t.planFollowed === true || t.planFollowed === 'true');
+  const no = trades.filter((t) => t.planFollowed === false || t.planFollowed === 'false');
+  return { followed: computeStats(yes), broken: computeStats(no), followedN: yes.length, brokenN: no.length };
+}
+
+export const EMOTIONS = ['Disciplined', 'Confident', 'Calm', 'FOMO', 'Revenge', 'Anxious', 'Bored', 'Greedy'];
+
+// Per-tag stats for a free-text, comma-separated "mistakes" field, so multiple
+// mistakes on one trade are each counted (unlike the single-select `mistake`).
+export function mistakeTagStats(trades) {
+  const groups = {};
+  for (const t of trades) {
+    if (!t.mistakes) continue;
+    const tags = String(t.mistakes).split(',').map((s) => s.trim()).filter(Boolean);
+    for (const tag of tags) (groups[tag] = groups[tag] || []).push(t);
+  }
+  return Object.entries(groups)
+    .map(([key, arr]) => ({ key, ...computeStats(arr) }))
+    .sort((a, b) => a.expectancy - b.expectancy);
+}

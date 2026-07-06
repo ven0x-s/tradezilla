@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { api } from '../api.js';
-import { previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, todayISO } from '../helpers.js';
+import { previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, EMOTIONS, todayISO } from '../helpers.js';
 
 const QUICK_SYMBOLS = ['NQ', 'ES', 'MNQ', 'MES'];
 const QUICK_NEWS = ['CPI', 'NFP', 'FOMC', 'PMI', 'PCE', 'GDP', 'Retail Sales', 'Jobless Claims', 'ISM', 'Fed speech'];
@@ -46,7 +46,7 @@ const blank = () => ({
   pointValue: String(defaultPointValue('NQ')), commissions: '', setup: '',
   model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '',
   emotionEntry: '', emotionExit: '', mistake: '',
-  session: 'NY', notes: '', screenshots: [],
+  session: 'NY', notes: '', rating: '', planFollowed: false, emotion: '', mistakes: '', screenshots: [],
 });
 
 export default function TradeForm({ trade, onClose, onSaved, notify }) {
@@ -228,6 +228,31 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
                 <option value="">- none -</option>
                 {MISTAKES.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
+            </div>
+            <div className="field">
+              <label>Rating</label>
+              <select value={form.rating || ''} onChange={(e) => set('rating', e.target.value)}>
+                <option value="">-</option>
+                {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{'\u2605'.repeat(n)}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Emotion</label>
+              <select value={form.emotion || ''} onChange={(e) => set('emotion', e.target.value)}>
+                <option value="">-</option>
+                {EMOTIONS.map((em) => <option key={em} value={em}>{em}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Plan followed</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, height: 38 }}>
+                <input type="checkbox" style={{ width: 18, height: 18 }} checked={!!form.planFollowed} onChange={(e) => set('planFollowed', e.target.checked)} />
+                <span className="hint">{form.planFollowed ? 'Yes' : 'No'}</span>
+              </label>
+            </div>
+            <div className="field full">
+              <label>Mistakes (comma separated)</label>
+              <input value={form.mistakes || ''} onChange={(e) => set('mistakes', e.target.value)} placeholder="e.g. moved stop, chased entry" />
             </div>
             <div className="field full">
               <label>Notes</label>
