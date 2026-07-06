@@ -43,13 +43,13 @@ app.get('/api/auth/status', (req, res) => res.json({ hasUsers: auth.hasUsers() }
 app.post('/api/auth/register', (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !String(username).trim() || !password || String(password).length < 4) {
-    return res.status(400).json({ error: 'Gebruikersnaam en wachtwoord (min. 4 tekens) zijn verplicht' });
+    return res.status(400).json({ error: 'Username and password (min. 4 characters) are required' });
   }
   // Registration is only open for the first (bootstrap) account, or for an
   // already-logged-in user adding another personal account.
   const loggedIn = !!auth.getSession(req.cookies[SESSION_COOKIE]);
   if (auth.hasUsers() && !loggedIn) {
-    return res.status(403).json({ error: 'Registratie is uitgeschakeld. Log in met een bestaand account.' });
+    return res.status(403).json({ error: 'Registration is disabled. Log in with an existing account.' });
   }
   try {
     const user = auth.createUser(String(username).trim(), password);
@@ -64,7 +64,7 @@ app.post('/api/auth/register', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body || {};
   const user = auth.verifyUser(username || '', password || '');
-  if (!user) return res.status(401).json({ error: 'Ongeldige gebruikersnaam of wachtwoord' });
+  if (!user) return res.status(401).json({ error: 'Invalid username or password' });
   const token = auth.createSession(user.username);
   setSessionCookie(res, token);
   res.json(user);

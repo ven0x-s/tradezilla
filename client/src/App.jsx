@@ -124,7 +124,7 @@ export default function App() {
         </nav>
         <div className="spacer" />
         <button className="btn" onClick={() => setEditing({})}>+ New trade</button>
-        <button className="btn ghost" onClick={logout} title="Uitloggen">{user.username} · Uitloggen</button>
+        <button className="btn ghost" onClick={logout} title="Log out">{user.username} · Log out</button>
       </header>
 
       <main className="content">

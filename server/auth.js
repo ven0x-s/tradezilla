@@ -37,7 +37,7 @@ function hashPassword(password, salt) {
 function createUser(username, password) {
   const users = readUsers();
   if (users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
-    throw new Error('Gebruikersnaam bestaat al');
+    throw new Error('Username already exists');
   }
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = hashPassword(password, salt).toString('hex');

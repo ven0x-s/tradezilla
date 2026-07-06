@@ -54,12 +54,12 @@ function Insights({ emotionRows, mistakeRows }) {
     <div className="grid" style={{ marginBottom: 24, gap: 10 }}>
       {costly.map((r) => (
         <div key={'c' + r.key} className="card insight bad">
-          Je verliest gemiddeld <b>{fmtUSD(Math.abs(r.expectancy))}</b> per trade bij <b>{r.key}</b> ({r.count} trades, {fmtNum(r.winRate, 0)}% win).
+          You lose an average of <b>{fmtUSD(Math.abs(r.expectancy))}</b> per trade with <b>{r.key}</b> ({r.count} trades, {fmtNum(r.winRate, 0)}% win).
         </div>
       ))}
       {profitable.map((r) => (
         <div key={'p' + r.key} className="card insight good">
-          Je bent het meest winstgevend bij <b>{r.key}</b>: gemiddeld <b>{fmtUSD(r.expectancy)}</b> per trade ({r.count} trades, {fmtNum(r.winRate, 0)}% win).
+          You are most profitable with <b>{r.key}</b>: averaging <b>{fmtUSD(r.expectancy)}</b> per trade ({r.count} trades, {fmtNum(r.winRate, 0)}% win).
         </div>
       ))}
     </div>

@@ -4,14 +4,11 @@ import { previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, toda
 
 const QUICK_SYMBOLS = ['NQ', 'ES', 'MNQ', 'MES'];
 const QUICK_NEWS = ['CPI', 'NFP', 'FOMC', 'PMI', 'PCE', 'GDP', 'Retail Sales', 'Jobless Claims', 'ISM', 'Fed speech'];
-const QUICK_EMOTIONS = ['FOMO', 'Geduldig', 'Wraak-trade', 'Zelfverzekerd', 'Angstig', 'Hebzuchtig', 'Verveeld', 'Gedisciplineerd'];
+const QUICK_EMOTIONS = ['FOMO', 'Patient', 'Revenge trade', 'Confident', 'Anxious', 'Greedy', 'Bored', 'Disciplined'];
 const MISTAKES = [
-  'Stoploss te vroeg verplaatst', 'Te grote positie (overleveraging)', 'Strategie niet gevolgd',
-  'Te vroeg ingestapt (FOMO entry)', 'Winst te vroeg genomen', 'Verlies te lang laten lopen',
-  'Geen stoploss gezet', 'Revenge trade na verlies', 'Overtraded (te veel trades)', 'Tegen HTF bias in',
-];
-const GRADES = [
-  ['A', 'A — Excellent'], ['B', 'B — Good'], ['C', 'C — Average'], ['D', 'D — Below average'], ['F', 'F — Poor'],
+  'Moved stop loss too early', 'Position too large (overleveraged)', 'Did not follow strategy',
+  'Entered too early (FOMO entry)', 'Took profit too early', 'Let a loss run too long',
+  'No stop loss set', 'Revenge trade after a loss', 'Overtraded (too many trades)', 'Traded against HTF bias',
 ];
 
 // Dropdown with a quick-pick list plus a free-text "Other…" fallback,
@@ -211,10 +208,7 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
             </div>
             <div className="field">
               <label>Grade</label>
-              <select value={form.grade || ''} onChange={(e) => set('grade', e.target.value)}>
-                <option value="">- none -</option>
-                {GRADES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
+              <input value={form.grade || ''} onChange={(e) => set('grade', e.target.value)} placeholder="e.g. A, B+, 8/10" />
             </div>
             <ChoiceField
               label="News (red folder)" value={form.newsEvent} options={QUICK_NEWS}

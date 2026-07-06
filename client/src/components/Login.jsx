@@ -13,11 +13,11 @@ export default function Login({ mode, onAuthed }) {
     e.preventDefault();
     setError('');
     if (!username.trim() || password.length < 4) {
-      setError('Vul een gebruikersnaam en wachtwoord (min. 4 tekens) in');
+      setError('Enter a username and password (min. 4 characters)');
       return;
     }
     if (isRegister && password !== password2) {
-      setError('Wachtwoorden komen niet overeen');
+      setError('Passwords do not match');
       return;
     }
     setBusy(true);
@@ -37,25 +37,25 @@ export default function Login({ mode, onAuthed }) {
     <div className="login-screen">
       <form className="login-card" onSubmit={submit}>
         <div className="brand"><img src="/pugzilla-logo.jpg" alt="Pugzilla" className="brand-logo" /> Pug<span className="z">zilla</span></div>
-        <h2>{isRegister ? 'Maak je account aan' : 'Inloggen'}</h2>
-        {isRegister && <p className="hint">Eerste keer? Maak hier je persoonlijke login aan.</p>}
+        <h2>{isRegister ? 'Create your account' : 'Log in'}</h2>
+        {isRegister && <p className="hint">First time here? Create your personal login below.</p>}
         <div className="field">
-          <label>Gebruikersnaam</label>
+          <label>Username</label>
           <input autoFocus value={username} onChange={(e) => setUsername(e.target.value)} />
         </div>
         <div className="field">
-          <label>Wachtwoord</label>
+          <label>Password</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {isRegister && (
           <div className="field">
-            <label>Bevestig wachtwoord</label>
+            <label>Confirm password</label>
             <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
           </div>
         )}
         {error && <div className="login-error">{error}</div>}
         <button className="btn" type="submit" disabled={busy}>
-          {busy ? 'Bezig…' : isRegister ? 'Account aanmaken' : 'Inloggen'}
+          {busy ? 'Working…' : isRegister ? 'Create account' : 'Log in'}
         </button>
       </form>
     </div>
