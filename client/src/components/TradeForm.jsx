@@ -112,12 +112,13 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
   const [lightbox, setLightbox] = useState(null);
   const fileRef = useRef();
   const tagRefs = useRef({});
+  const saveRef = useRef();
   const isEditing = !!form.id;
 
   const preview = useMemo(() => previewMetrics(form), [form]);
   const tvValid = isTradingViewUrl(form.tvUrl);
 
-  // Digit keys 1-9 quick-toggle the matching setup tag, unless typing in a field.
+  // Digit keys 1-9 quick-toggle setup tags; S saves — unless typing in a field.
   useEffect(() => {
     function onKey(e) {
       const el = document.activeElement;
@@ -126,6 +127,9 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
       if (e.key >= '1' && e.key <= '9') {
         const fn = tagRefs.current[Number(e.key) - 1];
         if (fn) { e.preventDefault(); fn(); }
+      } else if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        if (saveRef.current) saveRef.current();
       }
     }
     window.addEventListener('keydown', onKey);
@@ -165,6 +169,7 @@ export default function TradeForm({ trade, onClose, onSaved, notify }) {
       setSaving(false);
     }
   }
+  saveRef.current = save;
 
   async function upload(e) {
     const files = Array.from(e.target.files || []);

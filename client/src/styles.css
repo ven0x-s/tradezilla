@@ -12,6 +12,17 @@
   --radius: 10px;
   --shadow: 0 4px 20px rgba(0,0,0,0.35);
 }
+:root[data-theme="light"] {
+  --bg: #f4f6fa;
+  --bg-2: #ffffff;
+  --bg-3: #eef2f7;
+  --border: #d7dee7;
+  --text: #1a2230;
+  --text-dim: #5b6577;
+  --shadow: 0 4px 20px rgba(20,30,50,0.12);
+}
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body {
@@ -193,6 +204,23 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* Playbook */
 .pb-rules { margin: 10px 0 0; padding-left: 18px; }
 .pb-rules li { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+
+/* Icon button (theme toggle etc.) */
+.icon-btn { background: var(--bg-3); border: 1px solid var(--border); color: var(--text); width: 38px; height: 38px; border-radius: 8px; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; }
+.icon-btn:hover { background: var(--border); }
+
+/* Help / shortcuts modal */
+.shortcut-list { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; align-items: center; }
+.shortcut-list kbd { background: var(--bg-3); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; padding: 2px 8px; font-family: inherit; font-size: 12px; font-weight: 700; justify-self: start; }
+
+/* Quick-entry (mobile-friendly) */
+.quick-form .field { margin-bottom: 14px; }
+.quick-form .seg.big button { padding: 14px; font-size: 16px; }
+.quick-form input { font-size: 16px; padding: 12px; }
+.quick-result { display: flex; gap: 20px; justify-content: center; background: var(--bg-3); border-radius: 10px; padding: 14px; margin-top: 4px; }
+.quick-result span { display: block; font-size: 11px; color: var(--text-dim); text-align: center; }
+.quick-result b { font-size: 20px; }
+.btn.big { padding: 14px 20px; font-size: 16px; width: 100%; }
 
 .empty-state { text-align: center; color: var(--text-dim); padding: 60px 20px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--bg-3); border: 1px solid var(--border); padding: 12px 20px; border-radius: 10px; z-index: 200; box-shadow: var(--shadow); }

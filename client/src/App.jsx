@@ -12,6 +12,8 @@ import Login from './components/Login.jsx';
 import ShareCard from './components/ShareCard.jsx';
 import PsychologyView from './components/PsychologyView.jsx';
 import PlaybookView from './components/PlaybookView.jsx';
+import HelpModal from './components/HelpModal.jsx';
+import QuickTradeForm from './components/QuickTradeForm.jsx';
 import { APP_VERSION } from './helpers.js';
 
 const TABS = [
@@ -38,7 +40,33 @@ export default function App() {
   const [filters, setFilters] = useState(emptyFilters);
   const [editing, setEditing] = useState(null); // trade object or {} for new
   const [sharing, setSharing] = useState(null); // trade object being shared
+  const [quick, setQuick] = useState(false); // quick-add form open
+  const [help, setHelp] = useState(false); // shortcuts modal open
+  const [theme, setTheme] = useState(() => localStorage.getItem('pug_theme') || 'dark');
   const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('pug_theme', theme);
+  }, [theme]);
+  const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
+
+  // Global keyboard shortcuts.
+  useEffect(() => {
+    function onKey(e) {
+      const el = document.activeElement;
+      const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
+      if (e.key === 'Escape') { setHelp(false); setQuick(false); setSharing(null); setEditing(null); return; }
+      if (!user || typing) return;
+      if (e.key === '?') { e.preventDefault(); setHelp((h) => !h); return; }
+      if (editing || quick || sharing || help) return;
+      if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setEditing({}); }
+      else if (e.key === 'q' || e.key === 'Q') { e.preventDefault(); setQuick(true); }
+      else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleTheme(); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [user, editing, quick, sharing, help, toggleTheme]);
 
   const notify = useCallback((msg) => {
     setToast(msg);
@@ -128,6 +156,9 @@ export default function App() {
           ))}
         </nav>
         <div className="spacer" />
+        <button className="icon-btn" onClick={() => setQuick(true)} title="Quick add (Q)">⚡</button>
+        <button className="icon-btn" onClick={toggleTheme} title="Toggle theme (D)">{theme === 'dark' ? '☀' : '☾'}</button>
+        <button className="icon-btn" onClick={() => setHelp(true)} title="Shortcuts (?)">?</button>
         <button className="btn" onClick={() => setEditing({})}>+ New trade</button>
         <button className="btn ghost" onClick={logout} title="Log out">{user.username} · Log out</button>
       </header>
@@ -160,6 +191,8 @@ export default function App() {
         />
       )}
       {sharing && <ShareCard trade={sharing} onClose={() => setSharing(null)} />}
+      {quick && <QuickTradeForm onClose={() => setQuick(false)} onSaved={() => load()} notify={notify} />}
+      {help && <HelpModal onClose={() => setHelp(false)} />}
       {toast && <div className="toast">{toast}</div>}
       <footer className="app-footer">Pugzilla v{APP_VERSION}</footer>
     </div>
