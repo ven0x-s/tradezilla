@@ -106,5 +106,6 @@
 
 # AI Change Log
 - 2026-07-06 — Created MEMORY.md from full-codebase analysis at commit `a917133` (v2.0.0). — Claude
+- 2026-07-06 — Added Market Journal (`server/journal.js` store + `/api/journal` CRUD/screenshots, `MarketJournalView.jsx`, "Market" tab): per-day notes (date, bias, took-trades flag, what-I-saw, why-did/didn't-trade, screenshots) for days with or without trades — separate from the trades store. Also added Share-card element toggles (+ P&L in points). — Claude
 - 2026-07-06 — Added shared Account-type + Playbook filters (in `emptyFilters`/`Filters.jsx`, applied via `App.filtered` so Trades+Insights stay consistent), per-trade `playbookId` selector, `By playbook` report + Trades table Account/Playbook columns, trade Notes on the Share image (wrapped, canvas grows to avoid truncation), and a larger header/login logo. `ACCOUNT_TYPES` changed to `Eval/Funded/Demo Funded/Live`. — Claude
 <!-- Future sessions: append one dated bullet per significant change. Keep this file under 1000 lines; update sections in place rather than adding new ones. -->

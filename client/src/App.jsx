@@ -12,6 +12,7 @@ import Login from './components/Login.jsx';
 import ShareCard from './components/ShareCard.jsx';
 import PsychologyView from './components/PsychologyView.jsx';
 import PlaybookView from './components/PlaybookView.jsx';
+import MarketJournalView from './components/MarketJournalView.jsx';
 import HelpModal from './components/HelpModal.jsx';
 import QuickTradeForm from './components/QuickTradeForm.jsx';
 import { APP_VERSION } from './helpers.js';
@@ -24,6 +25,7 @@ const TABS = [
   ['analysis', 'Analysis'],
   ['psychology', 'Psychology'],
   ['playbook', 'Playbook'],
+  ['market', 'Market'],
   ['data', 'Data'],
 ];
 
@@ -148,7 +150,7 @@ export default function App() {
     } catch (e) { notify('Delete failed: ' + e.message); }
   }
 
-  const showFilters = tab !== 'data';
+  const showFilters = tab !== 'data' && tab !== 'market';
 
   if (!authChecked) return <div className="empty-state">Loading…</div>;
   if (!user) return <Login mode={needsRegister ? 'register' : 'login'} onAuthed={onAuthed} />;
@@ -184,6 +186,7 @@ export default function App() {
             {tab === 'analysis' && <AnalysisView trades={filtered} playbooks={playbooks} />}
             {tab === 'psychology' && <PsychologyView trades={filtered} />}
             {tab === 'playbook' && <PlaybookView trades={trades} notify={notify} onChanged={loadPlaybooks} />}
+            {tab === 'market' && <MarketJournalView notify={notify} />}
             {tab === 'data' && <DataView trades={trades} onChanged={load} notify={notify} />}
           </>
         )}

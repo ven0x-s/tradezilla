@@ -46,4 +46,15 @@ export const api = {
     return req('/api/playbooks/' + id + '/screenshots', { method: 'POST', body: fd });
   },
   deletePlaybookShot: (id, sid) => req('/api/playbooks/' + id + '/screenshots/' + sid, { method: 'DELETE' }),
+  listJournal: () => req('/api/journal'),
+  createJournal: (e) => req('/api/journal', { method: 'POST', headers: J, body: JSON.stringify(e) }),
+  updateJournal: (id, e) => req('/api/journal/' + id, { method: 'PUT', headers: J, body: JSON.stringify(e) }),
+  deleteJournal: (id) => req('/api/journal/' + id, { method: 'DELETE' }),
+  uploadJournalShot: (id, file, label) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('label', label || '');
+    return req('/api/journal/' + id + '/screenshots', { method: 'POST', body: fd });
+  },
+  deleteJournalShot: (id, sid) => req('/api/journal/' + id + '/screenshots/' + sid, { method: 'DELETE' }),
 };

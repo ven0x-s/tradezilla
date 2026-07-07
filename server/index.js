@@ -8,6 +8,7 @@ const tradovate = require('./tradovate');
 const csv = require('./csv');
 const auth = require('./auth');
 const playbooks = require('./playbooks');
+const journal = require('./journal');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -174,6 +175,36 @@ app.post('/api/playbooks/:id/screenshots', upload.single('file'), (req, res) => 
 });
 app.delete('/api/playbooks/:id/screenshots/:sid', (req, res) => {
   const shot = playbooks.removeScreenshot(req.params.id, req.params.sid);
+  if (!shot) return res.status(404).json({ error: 'not found' });
+  try { fs.unlinkSync(path.join(UPLOAD_DIR, shot.filename)); } catch {}
+  res.json({ ok: true });
+});
+
+// ---- Market journal (day notes, separate from trades) ----
+app.get('/api/journal', (req, res) => res.json(journal.list()));
+app.post('/api/journal', (req, res) => res.status(201).json(journal.create(req.body || {})));
+app.put('/api/journal/:id', (req, res) => {
+  const e = journal.update(req.params.id, req.body || {});
+  if (!e) return res.status(404).json({ error: 'not found' });
+  res.json(e);
+});
+app.delete('/api/journal/:id', (req, res) => {
+  const e = journal.remove(req.params.id);
+  if (!e) return res.status(404).json({ error: 'not found' });
+  (e.screenshots || []).forEach((s) => { try { fs.unlinkSync(path.join(UPLOAD_DIR, s.filename)); } catch {} });
+  res.json({ ok: true });
+});
+app.post('/api/journal/:id/screenshots', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no image file' });
+  const shot = journal.addScreenshot(req.params.id, req.file.filename, req.body.label);
+  if (!shot) {
+    try { fs.unlinkSync(path.join(UPLOAD_DIR, req.file.filename)); } catch {}
+    return res.status(404).json({ error: 'entry not found' });
+  }
+  res.status(201).json(shot);
+});
+app.delete('/api/journal/:id/screenshots/:sid', (req, res) => {
+  const shot = journal.removeScreenshot(req.params.id, req.params.sid);
   if (!shot) return res.status(404).json({ error: 'not found' });
   try { fs.unlinkSync(path.join(UPLOAD_DIR, shot.filename)); } catch {}
   res.json({ ok: true });
