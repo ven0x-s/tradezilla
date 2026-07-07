@@ -36,16 +36,16 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-async function draw(canvas, t) {
+async function draw(canvas, t, o) {
   const ctx = canvas.getContext('2d');
   const shot = (t.screenshots || [])[0];
-  const hasImage = !!shot;
+  const hasImage = !!shot && o.screenshot;
   const leftW = hasImage ? 680 : W;
 
   // Pre-measure notes so the canvas can grow and avoid truncation where it fits.
   const NOTES_FONT = '16px Arial', NOTES_LH = 24, NOTES_LABEL_Y = 512, MAX_NOTES_LINES = 8;
   let noteLines = [];
-  if (t.notes && String(t.notes).trim()) {
+  if (o.notes && t.notes && String(t.notes).trim()) {
     ctx.font = NOTES_FONT;
     noteLines = wrapLines(ctx, t.notes, leftW - 80);
     if (noteLines.length > MAX_NOTES_LINES) {
@@ -72,77 +72,93 @@ async function draw(canvas, t) {
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
 
-  // logo + wordmark (larger logo)
-  const logo = await loadImage('/pugzilla-logo.jpg');
-  if (logo) {
-    roundRect(ctx, 40, 28, 64, 64, 15);
-    ctx.save(); ctx.clip();
-    ctx.drawImage(logo, 40, 28, 64, 64);
-    ctx.restore();
+  // logo + wordmark
+  if (o.brand) {
+    const logo = await loadImage('/pugzilla-logo.jpg');
+    if (logo) {
+      roundRect(ctx, 40, 28, 64, 64, 15);
+      ctx.save(); ctx.clip();
+      ctx.drawImage(logo, 40, 28, 64, 64);
+      ctx.restore();
+    }
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '700 27px Arial';
+    ctx.fillText('Pugzilla', 118, 70);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText('zilla', 118 + ctx.measureText('Pug').width, 70);
   }
-  ctx.fillStyle = '#e6edf3';
-  ctx.font = '700 27px Arial';
-  ctx.fillText('Pugzilla', 118, 70);
-  ctx.fillStyle = '#3b82f6';
-  ctx.fillText('zilla', 118 + ctx.measureText('Pug').width, 70);
 
-  ctx.fillStyle = '#8b98a9';
-  ctx.font = '14px Arial';
-  ctx.textAlign = 'right';
-  ctx.fillText(`${t.date || ''} ${t.time || ''}`.trim(), leftW - 40, 50);
-  ctx.textAlign = 'left';
+  if (o.date) {
+    ctx.fillStyle = '#8b98a9';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${t.date || ''} ${t.time || ''}`.trim(), leftW - 40, 50);
+    ctx.textAlign = 'left';
+  }
 
   // symbol + direction pill
-  ctx.font = '700 44px Arial';
-  ctx.fillStyle = '#e6edf3';
-  ctx.fillText(t.symbol || '', 40, 150);
-  const symW = ctx.measureText(t.symbol || '').width;
-  ctx.font = '700 20px Arial';
-  const dirText = (t.direction === 'short' ? 'SHORT' : 'LONG');
-  const pillColor = t.direction === 'short' ? '#ef4444' : '#22c55e';
-  const pillX = 40 + symW + 20;
-  ctx.fillStyle = pillColor + '33';
-  roundRect(ctx, pillX, 118, ctx.measureText(dirText).width + 32, 36, 18);
-  ctx.fill();
-  ctx.fillStyle = pillColor;
-  ctx.fillText(dirText, pillX + 16, 143);
+  if (o.symbol) {
+    ctx.font = '700 44px Arial';
+    ctx.fillStyle = '#e6edf3';
+    ctx.fillText(t.symbol || '', 40, 150);
+    const symW = ctx.measureText(t.symbol || '').width;
+    ctx.font = '700 20px Arial';
+    const dirText = (t.direction === 'short' ? 'SHORT' : 'LONG');
+    const pillColor = t.direction === 'short' ? '#ef4444' : '#22c55e';
+    const pillX = 40 + symW + 20;
+    ctx.fillStyle = pillColor + '33';
+    roundRect(ctx, pillX, 118, ctx.measureText(dirText).width + 32, 36, 18);
+    ctx.fill();
+    ctx.fillStyle = pillColor;
+    ctx.fillText(dirText, pillX + 16, 143);
+  }
 
   // entry / exit
-  ctx.font = '13px Arial';
-  ctx.fillStyle = '#8b98a9';
-  ctx.fillText('ENTRY', 40, 210);
-  ctx.fillText('EXIT', 220, 210);
-  ctx.font = '700 30px Arial';
-  ctx.fillStyle = '#e6edf3';
-  ctx.fillText(fmtNum(t.entry, 2), 40, 245);
-  ctx.fillText(fmtNum(t.exit, 2), 220, 245);
+  if (o.entryExit) {
+    ctx.font = '13px Arial';
+    ctx.fillStyle = '#8b98a9';
+    ctx.fillText('ENTRY', 40, 210);
+    ctx.fillText('EXIT', 220, 210);
+    ctx.font = '700 30px Arial';
+    ctx.fillStyle = '#e6edf3';
+    ctx.fillText(fmtNum(t.entry, 2), 40, 245);
+    ctx.fillText(fmtNum(t.exit, 2), 220, 245);
+  }
 
-  // big PnL
-  ctx.font = '13px Arial';
-  ctx.fillStyle = '#8b98a9';
-  ctx.fillText('RESULT', 40, 300);
-  ctx.font = '700 72px Arial';
-  ctx.fillStyle = t.resultDollars > 0 ? '#22c55e' : t.resultDollars < 0 ? '#ef4444' : '#e6edf3';
-  ctx.fillText(fmtUSD(t.resultDollars), 40, 375);
+  // result (dollars or points)
+  if (o.result) {
+    const usePts = o.pnlPoints;
+    const val = usePts ? t.resultPoints : t.resultDollars;
+    ctx.font = '13px Arial';
+    ctx.fillStyle = '#8b98a9';
+    ctx.fillText(usePts ? 'RESULT (POINTS)' : 'RESULT', 40, 300);
+    ctx.font = '700 72px Arial';
+    ctx.fillStyle = val > 0 ? '#22c55e' : val < 0 ? '#ef4444' : '#e6edf3';
+    ctx.fillText(usePts ? (val == null ? '-' : (val > 0 ? '+' : '') + fmtNum(val, 2) + ' pts') : fmtUSD(val), 40, 375);
+  }
 
-  ctx.font = '600 22px Arial';
-  ctx.fillStyle = '#8b98a9';
-  const rTxt = t.rMultiple == null ? '' : fmtR(t.rMultiple) + '   ·   ' + fmtNum(t.resultPoints, 2) + ' pts';
-  ctx.fillText(rTxt, 40, 415);
+  if (o.rMultiple) {
+    ctx.font = '600 22px Arial';
+    ctx.fillStyle = '#8b98a9';
+    const rTxt = t.rMultiple == null ? '' : fmtR(t.rMultiple) + '   ·   ' + fmtNum(t.resultPoints, 2) + ' pts';
+    ctx.fillText(rTxt, 40, 415);
+  }
 
   // tag row
-  const tags = [t.setup, t.model, t.entryModel, t.htfDelivery, t.newsEvent].filter(Boolean);
-  let tx = 40;
-  ctx.font = '600 15px Arial';
-  for (const tag of tags) {
-    const tw = ctx.measureText(tag).width + 28;
-    if (tx + tw > leftW - 40) break;
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    roundRect(ctx, tx, 450, tw, 34, 17);
-    ctx.fill();
-    ctx.fillStyle = '#c9d3e0';
-    ctx.fillText(tag, tx + 14, 472);
-    tx += tw + 10;
+  if (o.tags) {
+    const tags = [t.setup, t.model, t.entryModel, t.htfDelivery, t.newsEvent].filter(Boolean);
+    let tx = 40;
+    ctx.font = '600 15px Arial';
+    for (const tag of tags) {
+      const tw = ctx.measureText(tag).width + 28;
+      if (tx + tw > leftW - 40) break;
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      roundRect(ctx, tx, 450, tw, 34, 17);
+      ctx.fill();
+      ctx.fillStyle = '#c9d3e0';
+      ctx.fillText(tag, tx + 14, 472);
+      tx += tw + 10;
+    }
   }
 
   // notes (wrapped, grows the card downward)
@@ -156,12 +172,14 @@ async function draw(canvas, t) {
   }
 
   // footer
-  ctx.font = '13px Arial';
-  ctx.fillStyle = '#5b6577';
-  ctx.fillText(`${t.contracts || ''} contract${t.contracts == 1 ? '' : 's'} · ${t.session || ''}`, 40, H - 36);
-  ctx.textAlign = 'right';
-  ctx.fillText('pugzilla journal', leftW - 40, H - 36);
-  ctx.textAlign = 'left';
+  if (o.footer) {
+    ctx.font = '13px Arial';
+    ctx.fillStyle = '#5b6577';
+    ctx.fillText(`${t.contracts || ''} contract${t.contracts == 1 ? '' : 's'} · ${t.session || ''}`, 40, H - 36);
+    ctx.textAlign = 'right';
+    ctx.fillText('pugzilla journal', leftW - 40, H - 36);
+    ctx.textAlign = 'left';
+  }
 
   // screenshot panel
   if (hasImage) {
@@ -182,19 +200,31 @@ async function draw(canvas, t) {
   }
 }
 
+const DEFAULT_OPTS = {
+  brand: true, date: true, symbol: true, entryExit: true, result: true,
+  rMultiple: true, tags: true, notes: true, footer: true, screenshot: true, pnlPoints: false,
+};
+const TOGGLES = [
+  ['result', 'P&L'], ['symbol', 'Symbol'], ['entryExit', 'Entry/Exit'], ['rMultiple', 'R / pts'],
+  ['tags', 'Tags'], ['notes', 'Notes'], ['date', 'Date'], ['brand', 'Logo'], ['footer', 'Footer'], ['screenshot', 'Screenshot'],
+];
+
 export default function ShareCard({ trade, onClose }) {
   const canvasRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [copyMsg, setCopyMsg] = useState('');
+  const [opts, setOpts] = useState(DEFAULT_OPTS);
+  const tog = (k) => setOpts((o) => ({ ...o, [k]: !o[k] }));
 
   useEffect(() => {
     let cancelled = false;
+    setReady(false);
     (async () => {
-      await draw(canvasRef.current, trade);
+      await draw(canvasRef.current, trade, opts);
       if (!cancelled) setReady(true);
     })();
     return () => { cancelled = true; };
-  }, [trade]);
+  }, [trade, opts]);
 
   function download() {
     const url = canvasRef.current.toDataURL('image/png');
@@ -225,6 +255,16 @@ export default function ShareCard({ trade, onClose }) {
           <button className="close-x" onClick={onClose}>×</button>
         </div>
         <div className="modal-body">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginBottom: 10, fontSize: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <input type="checkbox" checked={opts.pnlPoints} onChange={() => tog('pnlPoints')} /> P&L in points
+            </label>
+            {TOGGLES.map(([k, label]) => (
+              <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <input type="checkbox" checked={opts[k]} onChange={() => tog(k)} /> {label}
+              </label>
+            ))}
+          </div>
           <canvas ref={canvasRef} className="share-canvas" style={{ opacity: ready ? 1 : 0.3 }} />
           {!ready && <div className="hint" style={{ marginTop: 8 }}>Rendering card…</div>}
         </div>
