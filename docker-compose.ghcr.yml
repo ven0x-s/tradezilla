@@ -1,8 +1,8 @@
 # Run the pre-built image published by GitHub Actions (no building needed).
 services:
-  tradezilla:
-    image: ghcr.io/ven0x-s/tradezilla:latest
-    container_name: tradezilla
+  pugzilla:
+    image: ghcr.io/ven0x-s/pugzilla:latest
+    container_name: pugzilla
     restart: unless-stopped
     pull_policy: always
     ports:

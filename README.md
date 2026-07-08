@@ -1,4 +1,4 @@
-# Tradezilla Journal
+# Pugzilla Journal
 
 A local trading journal for NQ / ES futures. Express backend with a file-based JSON
 datastore so your data persists on disk and survives reloads (nothing is kept in

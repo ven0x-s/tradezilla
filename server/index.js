@@ -287,7 +287,7 @@ app.get('/api/backup', (req, res) => {
   store.makeBackup();
   const data = store.readAll();
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Content-Disposition', 'attachment; filename="tradezilla-backup.json"');
+  res.setHeader('Content-Disposition', 'attachment; filename="pugzilla-backup.json"');
   res.send(JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), trades: data }, null, 2));
 });
 
@@ -336,4 +336,4 @@ if (fs.existsSync(DIST)) {
   });
 }
 
-app.listen(PORT, () => console.log(`Tradezilla journal running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Pugzilla journal running on http://localhost:${PORT}`));

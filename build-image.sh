@@ -3,8 +3,8 @@
 # Run this on any machine that has Docker installed (your PC/Mac).
 set -e
 cd "$(dirname "$0")"
-IMAGE=tradezilla:latest
-OUT=tradezilla-image.tar
+IMAGE=pugzilla:latest
+OUT=pugzilla-image.tar
 echo "Building $IMAGE ..."
 docker build -t "$IMAGE" .
 echo "Saving to $OUT ..."

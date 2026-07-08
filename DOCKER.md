@@ -1,4 +1,4 @@
-# Running Tradezilla on your UGREEN NAS (Docker)
+# Running Pugzilla on your UGREEN NAS (Docker)
 
 The app is packaged as a single container: the Express server serves both the API and
 the built React frontend on port 3001. Your trades and screenshots are stored in two
@@ -11,8 +11,8 @@ you the importable image file you asked about.
 
 ## Route A — Build on the NAS with Compose (recommended, nothing else needed)
 
-1. Copy the whole `tradezilla` folder to a share on your NAS, for example to
-   `docker/tradezilla` (so it lives at `/volume1/docker/tradezilla` or, in UGOS paths,
+1. Copy the whole `pugzilla` folder to a share on your NAS, for example to
+   `docker/pugzilla` (so it lives at `/volume1/docker/pugzilla` or, in UGOS paths,
    under `/media/...`).
 2. Open **Docker** (Container Manager) in UGOS Pro → **Compose** (or **Project**) →
    **Create**.
@@ -30,21 +30,21 @@ for persistent storage. You can change those to any NAS share you like.
 The image tar has to be built on a machine that has Docker (your PC or Mac), because a
 Docker engine is required to produce it. Then you import the file on the NAS.
 
-1. On your computer with Docker installed, from the `tradezilla` folder run:
+1. On your computer with Docker installed, from the `pugzilla` folder run:
    - Windows: double-click `build-image.bat`
    - Mac/Linux: `./build-image.sh`
 
-   This creates `tradezilla-image.tar`.
-2. Copy `tradezilla-image.tar` to your NAS.
+   This creates `pugzilla-image.tar`.
+2. Copy `pugzilla-image.tar` to your NAS.
 3. In UGOS **Docker** → **Images** → **Import**, select the tar. The image
-   `tradezilla:latest` appears in your image list.
+   `pugzilla:latest` appears in your image list.
 4. Create the container from that image with:
    - Port: container `3001` → host `8088` (or any free port)
    - Volumes: map a NAS folder to `/app/server/data` and another to
      `/app/server/uploads`
 
    Or reuse `docker-compose.yml`: comment out `build: .`, uncomment
-   `image: tradezilla:latest`, and deploy it as a Compose project.
+   `image: pugzilla:latest`, and deploy it as a Compose project.
 5. Open `http://<your-nas-ip>:8088`.
 
 ---
@@ -81,7 +81,7 @@ data folders are untouched by updates.
 When the app source changes, get the updated files onto the NAS and rebuild:
 
 ```
-cd ~/tradezilla
+cd ~/pugzilla
 sudo docker compose up -d --build
 ```
 
@@ -93,11 +93,11 @@ rebuild. The Tradovate credentials file (`server/data/tradovate.json`) also pers
 ## Quickstart on the NAS (one command)
 
 No need to copy the repo onto the NAS at all. This single command creates
-`~/tradezilla`, fetches the compose file, pulls the image and starts the
+`~/pugzilla`, fetches the compose file, pulls the image and starts the
 container, all in one go:
 
 ```
-curl -fsSL -o ~/tradezilla-quickstart.sh https://raw.githubusercontent.com/ven0x-s/tradezilla/main/nas-quickstart.sh && sh ~/tradezilla-quickstart.sh
+curl -fsSL -o ~/pugzilla-quickstart.sh https://raw.githubusercontent.com/ven0x-s/pugzilla/main/nas-quickstart.sh && sh ~/pugzilla-quickstart.sh
 ```
 
 Open `http://<nas-ip>:9088` afterwards. Safe to re-run any time (e.g. after a
@@ -108,17 +108,17 @@ new image is published) - it never touches your existing `data/trades` and
 
 `.github/workflows/docker-publish.yml` builds the image and pushes it to the GitHub
 Container Registry (ghcr.io) on every push to `main` (and on `v*` tags). The image is
-published as `ghcr.io/ven0x-s/tradezilla:latest` and the package is public, so it can be
+published as `ghcr.io/ven0x-s/pugzilla:latest` and the package is public, so it can be
 pulled directly with no login:
 
 ```
-docker pull ghcr.io/ven0x-s/tradezilla:latest
+docker pull ghcr.io/ven0x-s/pugzilla:latest
 ```
 
 On the NAS (or any machine with Docker), run it with Compose instead of building locally:
 
 ```
-cd ~/tradezilla
+cd ~/pugzilla
 sudo docker compose -f docker-compose.ghcr.yml pull
 sudo docker compose -f docker-compose.ghcr.yml up -d
 ```
@@ -133,5 +133,5 @@ The workflow builds for `linux/amd64`, which matches Intel-based UGREEN NAS mode
 `linux/arm64` to the `platforms:` line if you run it on an ARM device.
 
 If you ever make the GitHub repo private, the GHCR package can be switched to private too
-(GitHub profile → Packages → `tradezilla` → Package settings) — then `docker login ghcr.io`
+(GitHub profile → Packages → `pugzilla` → Package settings) — then `docker login ghcr.io`
 with a Personal Access Token (`read:packages` scope) is required before pulling.

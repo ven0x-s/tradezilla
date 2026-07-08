@@ -1,5 +1,5 @@
 # Project Overview
-- **Project name:** Repo/image `tradezilla`; package `tradezilla-journal`; UI is branded **Pugzilla**. (The brand split is intentional — see Design Decisions.)
+- **Project name:** Repo/image/UI all `pugzilla` (package `pugzilla-journal`). The GitHub repo was renamed from `tradezilla` → `pugzilla` on 2026-07-06; GitHub 301-redirects the old URLs. Local folder is still `.../Desktop/tradezilla` and the NAS deploy dir is still `/root/tradezilla` (folder names only, harmless). Tradovate integration keeps its own identifiers (`appId: TradezillaJournal`, `deviceId: tradezilla-nas`) — do NOT rename those, they may match an external Tradovate registration.
 - **Purpose:** A local, self-hosted trading journal for NQ/ES (index futures) traders. Log trades, attach chart screenshots, and analyse performance, psychology and ICT-style setups.
 - **Business objective:** Personal tool for one trader (single-user), runnable on a home NAS via Docker. Not a commercial multi-tenant product.
 - **Success criteria:** Data persists reliably on disk; existing trades never break on upgrade; new analytics help the owner find their edge and discipline leaks.
@@ -22,7 +22,7 @@
   - Client: `App.jsx` (tabs, theme, shortcuts, modals), `helpers.js` (all stats + option constants + `APP_VERSION`), `api.js` (fetch wrappers), plus one component per view/feature under `client/src/components/`.
 - **Data flows:** Browser → `/api/*` (JSON, cookie-auth) → store modules → JSON files on disk. Screenshots: multipart upload → `server/uploads/` → referenced by filename in trade/playbook records. Metrics are computed server-side on read (`decorate`) and previewed client-side (`previewMetrics`).
 - **External dependencies:** Tradovate REST API (optional, needs paid "API Access" add-on). GitHub Container Registry (image hosting). No other third-party runtime services.
-- **Infrastructure:** Docker image `ghcr.io/ven0x-s/tradezilla:latest` (public). `docker-compose.ghcr.yml` maps host **9088** → container **3001**, volumes `./data/trades`→`/app/server/data` and `./data/uploads`→`/app/server/uploads`. GitHub Actions (`.github/workflows/docker-publish.yml`) builds + pushes `linux/amd64` on push to `main` and `v*` tags. `nas-quickstart.sh` = one-command NAS setup.
+- **Infrastructure:** Docker image `ghcr.io/ven0x-s/pugzilla:latest` (public). `docker-compose.ghcr.yml` maps host **9088** → container **3001**, volumes `./data/trades`→`/app/server/data` and `./data/uploads`→`/app/server/uploads`. GitHub Actions (`.github/workflows/docker-publish.yml`) builds + pushes `linux/amd64` on push to `main` and `v*` tags. `nas-quickstart.sh` = one-command NAS setup.
 
 # Technology Stack
 - **Languages:** JavaScript (ES modules client, CommonJS server), CSS.
@@ -42,9 +42,9 @@
 - **New trade fields are optional / null-tolerant + one-time safety backup**
   - Rationale: hard requirement to never break existing trades on upgrade.
   - Consequences: No destructive migrations; `store.js` writes a `.schema-v2` marker + backup once on startup.
-- **Brand split (repo `tradezilla` vs UI `Pugzilla`)**
-  - Rationale: owner rebranded the UI; repo/image names kept stable to avoid breaking Docker/GHCR paths.
-  - Consequences: Two names in play — do not "fix" one to match the other.
+- **Unified naming as `pugzilla`** (repo renamed from `tradezilla` on 2026-07-06)
+  - Rationale: match the UI brand everywhere. The old brand split (repo `tradezilla` vs UI `Pugzilla`) is gone.
+  - Consequences: GHCR image path changed to `ghcr.io/ven0x-s/pugzilla`; the NAS had to re-point + recreate its container. Local/NAS folder names left as `tradezilla` (cosmetic).
 - **Single-process app serving API + SPA on one port**
   - Rationale: one container, one port, simplest NAS deploy.
 
@@ -94,7 +94,7 @@
 # AI Guidance
 - **Must understand first:** This is a single-user, file-JSON app. **Never break existing trades.** New fields must be optional and null-tolerant. Server (`store.computeMetrics`) is the source of truth for P&L/R/holding time.
 - **Read these files before changing behaviour (in order):** `README.md`, `DOCKER.md`, `server/store.js` (`FIELDS` + `computeMetrics`), `server/index.js` (routes + auth middleware), `client/src/helpers.js` (stats + option constants + `APP_VERSION`), `client/src/App.jsx` (tabs, theme, shortcuts).
-- **Do not change without strong reason:** the file-JSON persistence model; the auth model (scrypt + in-memory sessions); the repo/image name `tradezilla`; the null-tolerant field pattern; host port 9088 in compose.
+- **Do not change without strong reason:** the file-JSON persistence model; the auth model (scrypt + in-memory sessions); the repo/image name `pugzilla`; the null-tolerant field pattern; host port 9088 in compose.
 - **Extra caution:** any edit to `store.js` `FIELDS`/`computeMetrics`, CSV import/export, or Docker/compose/CI (owner deploys straight from GHCR). Restarting the server clears in-memory sessions → everyone is logged out.
 - **Test loop that works here:** `npm run build` → `preview_start` (server name `tradezilla-server`, port 3001) → register/login → create trades via `POST /api/trades` → verify tabs in the browser → delete `server/data/{users,trades,playbooks}.json` + uploads to clean up. **Server-side changes require a preview restart** (then re-login, sessions are in-memory). Data files are gitignored — safe to delete.
 - **Deploy flow:** commit to `main` → GitHub Actions builds + pushes the image → on NAS run `docker compose -f docker-compose.ghcr.yml pull && up -d`. Confirm the Actions run is green before telling the owner to pull.
@@ -105,6 +105,7 @@
 - **Important context:** Owner communicates in Dutch; app UI is English. Owner values token efficiency and a build→test→commit→push loop per change. Google Drive + multi-workspace are intentionally out of scope for now.
 
 # AI Change Log
+- 2026-07-06 — Renamed the GitHub repo `tradezilla` → `pugzilla` and updated all code/doc references (GHCR image path, compose service+container name, quickstart URL, README/DOCKER titles, package names, server backup filename/log). Left Tradovate `appId`/`deviceId` untouched (external identifiers). NAS had to `down` the old `tradezilla` container, fetch the new `docker-compose.ghcr.yml`, then `pull`+`up -d` the `pugzilla` image. — Claude
 - 2026-07-06 — Created MEMORY.md from full-codebase analysis at commit `a917133` (v2.0.0). — Claude
 - 2026-07-06 — Added Market Journal (`server/journal.js` store + `/api/journal` CRUD/screenshots, `MarketJournalView.jsx`, "Market" tab): per-day notes (date, bias, took-trades flag, what-I-saw, why-did/didn't-trade, screenshots) for days with or without trades — separate from the trades store. Also added Share-card element toggles (+ P&L in points). — Claude
 - 2026-07-06 — Added shared Account-type + Playbook filters (in `emptyFilters`/`Filters.jsx`, applied via `App.filtered` so Trades+Insights stay consistent), per-trade `playbookId` selector, `By playbook` report + Trades table Account/Playbook columns, trade Notes on the Share image (wrapped, canvas grows to avoid truncation), and a larger header/login logo. `ACCOUNT_TYPES` changed to `Eval/Funded/Demo Funded/Live`. — Claude
