@@ -105,6 +105,7 @@
 - **Important context:** Owner communicates in Dutch; app UI is English. Owner values token efficiency and a build→test→commit→push loop per change. Google Drive + multi-workspace are intentionally out of scope for now.
 
 # AI Change Log
+- 2026-07-09 — v2.1.1: footer now shows build id (`__BUILD_SHA__`/`__BUILD_DATE__` injected via vite `define`; CI passes `GIT_SHA` build-arg through Dockerfile ARG). `api.js` turns network-level "Failed to fetch" into an actionable message and 401s outside /auth into a "session expired, re-login" hint (in-memory sessions reset on every container update — the likely cause of user reports). — Claude
 - 2026-07-06 — Renamed the GitHub repo `tradezilla` → `pugzilla` and updated all code/doc references (GHCR image path, compose service+container name, quickstart URL, README/DOCKER titles, package names, server backup filename/log). Left Tradovate `appId`/`deviceId` untouched (external identifiers). NAS had to `down` the old `tradezilla` container, fetch the new `docker-compose.ghcr.yml`, then `pull`+`up -d` the `pugzilla` image. — Claude
 - 2026-07-06 — Created MEMORY.md from full-codebase analysis at commit `a917133` (v2.0.0). — Claude
 - 2026-07-06 — Added Market Journal (`server/journal.js` store + `/api/journal` CRUD/screenshots, `MarketJournalView.jsx`, "Market" tab): per-day notes (date, bias, took-trades flag, what-I-saw, why-did/didn't-trade, screenshots) for days with or without trades — separate from the trades store. Also added Share-card element toggles (+ P&L in points). — Claude

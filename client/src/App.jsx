@@ -205,7 +205,7 @@ export default function App() {
       {quick && <QuickTradeForm onClose={() => setQuick(false)} onSaved={() => load()} notify={notify} />}
       {help && <HelpModal onClose={() => setHelp(false)} />}
       {toast && <div className="toast">{toast}</div>}
-      <footer className="app-footer">Pugzilla v{APP_VERSION}</footer>
+      <footer className="app-footer">Pugzilla v{APP_VERSION} · build {__BUILD_SHA__} ({__BUILD_DATE__})</footer>
     </div>
   );
 }

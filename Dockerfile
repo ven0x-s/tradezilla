@@ -1,5 +1,7 @@
 # ---- Stage 1: build the React frontend ----
 FROM node:20-alpine AS client
+ARG GIT_SHA=dev
+ENV GIT_SHA=$GIT_SHA
 WORKDIR /build/client
 COPY client/package.json client/package-lock.json* ./
 RUN npm install

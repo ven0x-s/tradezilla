@@ -1,10 +1,19 @@
 const J = { 'Content-Type': 'application/json' };
 
 async function req(url, opts) {
-  const r = await fetch(url, opts);
+  let r;
+  try {
+    r = await fetch(url, opts);
+  } catch {
+    // Network-level failure ("Failed to fetch"): server unreachable, stale page, or connection dropped.
+    throw new Error('Cannot reach the Pugzilla server. Check that it is running, then hard-refresh this page (Ctrl+F5) and try again.');
+  }
   if (!r.ok) {
     let msg = r.statusText;
     try { msg = (await r.json()).error || msg; } catch {}
+    if (r.status === 401 && !url.includes('/auth/')) {
+      msg = 'Session expired (the server was restarted). Refresh the page and log in again.';
+    }
     throw new Error(msg);
   }
   const ct = r.headers.get('content-type') || '';
