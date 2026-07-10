@@ -1,7 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
+import qrcode from 'qrcode-generator';
 import { fmtUSD, fmtNum, fmtR, pnlClass } from '../helpers.js';
 
 const W = 1200;
+const REPO_URL = 'https://github.com/ven0x-s/pugzilla';
+
+// Subtle light-on-dark QR linking to the project repo.
+function drawQr(ctx, x, y, size) {
+  const qr = qrcode(0, 'L');
+  qr.addData(REPO_URL);
+  qr.make();
+  const n = qr.getModuleCount();
+  const cell = size / n;
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = '#8b98a9';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (qr.isDark(r, c)) ctx.fillRect(x + c * cell, y + r * cell, cell + 0.5, cell + 0.5);
+    }
+  }
+  ctx.restore();
+}
 
 function wrapLines(ctx, text, maxWidth) {
   const words = String(text).replace(/\s+/g, ' ').trim().split(' ');
@@ -96,6 +116,9 @@ async function draw(canvas, t, o) {
     ctx.textAlign = 'left';
   }
 
+  // subtle QR to the project repo, top-right under the date
+  if (o.qr) drawQr(ctx, leftW - 40 - 60, o.date ? 62 : 32, 60);
+
   // symbol + direction pill
   if (o.symbol) {
     ctx.font = '700 44px Arial';
@@ -115,14 +138,20 @@ async function draw(canvas, t, o) {
 
   // entry / exit
   if (o.entryExit) {
+    const partials = Array.isArray(t.exits) ? t.exits.filter((p) => p && p.qty && p.price != null) : [];
     ctx.font = '13px Arial';
     ctx.fillStyle = '#8b98a9';
     ctx.fillText('ENTRY', 40, 210);
-    ctx.fillText('EXIT', 220, 210);
+    ctx.fillText(partials.length ? 'EXIT (AVG)' : 'EXIT', 220, 210);
     ctx.font = '700 30px Arial';
     ctx.fillStyle = '#e6edf3';
     ctx.fillText(fmtNum(t.entry, 2), 40, 245);
     ctx.fillText(fmtNum(t.exit, 2), 220, 245);
+    if (partials.length) {
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#8b98a9';
+      ctx.fillText(partials.map((p) => `${p.qty} @ ${fmtNum(p.price, 2)}`).join('  ·  '), 40, 272);
+    }
   }
 
   // result (dollars or points)
@@ -202,11 +231,11 @@ async function draw(canvas, t, o) {
 
 const DEFAULT_OPTS = {
   brand: true, date: true, symbol: true, entryExit: true, result: true,
-  rMultiple: true, tags: true, notes: true, footer: true, screenshot: true, pnlPoints: false,
+  rMultiple: true, tags: true, notes: true, footer: true, screenshot: true, pnlPoints: false, qr: true,
 };
 const TOGGLES = [
   ['result', 'P&L'], ['symbol', 'Symbol'], ['entryExit', 'Entry/Exit'], ['rMultiple', 'R / pts'],
-  ['tags', 'Tags'], ['notes', 'Notes'], ['date', 'Date'], ['brand', 'Logo'], ['footer', 'Footer'], ['screenshot', 'Screenshot'],
+  ['tags', 'Tags'], ['notes', 'Notes'], ['date', 'Date'], ['brand', 'Logo'], ['footer', 'Footer'], ['screenshot', 'Screenshot'], ['qr', 'QR'],
 ];
 
 export default function ShareCard({ trade, onClose }) {

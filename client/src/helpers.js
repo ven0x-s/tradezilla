@@ -93,8 +93,20 @@ export const defaultPointValue = (sym) => DEFAULT_PV[String(sym || '').toUpperCa
 // Client-side preview of the same metrics the server computes.
 export function previewMetrics(t) {
   const n = (v) => (v === '' || v == null || isNaN(Number(v)) ? null : Number(v));
-  const entry = n(t.entry), exit = n(t.exit), stop = n(t.stopLoss);
-  const contracts = n(t.contracts) || 0;
+  const entry = n(t.entry), stop = n(t.stopLoss);
+  let exit = n(t.exit);
+  let contracts = n(t.contracts) || 0;
+  // Partial exits: effective exit = qty-weighted average (mirrors server computeMetrics)
+  const partials = (Array.isArray(t.exits) ? t.exits : [])
+    .map((p) => ({ qty: n(p && p.qty), price: n(p && p.price) }))
+    .filter((p) => p.qty > 0 && p.price != null);
+  let avgExit = null, exitQty = null;
+  if (partials.length) {
+    exitQty = partials.reduce((s, p) => s + p.qty, 0);
+    avgExit = +(partials.reduce((s, p) => s + p.price * p.qty, 0) / exitQty).toFixed(4);
+    exit = avgExit;
+    if (!contracts) contracts = exitQty;
+  }
   const pv = n(t.pointValue) || defaultPointValue(t.symbol);
   const comm = n(t.commissions) || 0;
   const dir = t.direction === 'short' ? -1 : 1;
@@ -107,7 +119,7 @@ export function previewMetrics(t) {
     risk = Math.abs(entry - stop) * pv * contracts;
     if (risk > 0 && dollars != null) r = +(dollars / risk).toFixed(2);
   }
-  return { points, dollars, r, risk, pv };
+  return { points, dollars, r, risk, pv, avgExit, exitQty };
 }
 
 // ---- Insights computations ----
@@ -260,7 +272,7 @@ export function isTradingViewUrl(url) {
   }
 }
 
-export const APP_VERSION = '2.1.1';
+export const APP_VERSION = '2.2.0';
 
 // Per setup-tag stats. A trade with multiple tags counts toward each of them.
 export function setupTagStats(trades) {

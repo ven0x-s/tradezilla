@@ -212,7 +212,7 @@ app.delete('/api/journal/:id/screenshots/:sid', (req, res) => {
 
 // ---- CSV export ----
 const CSV_COLUMNS = [
-  'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'contracts',
+  'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'exits', 'contracts',
   'stopLoss', 'takeProfit', 'pointValue', 'commissions', 'resultPoints',
   'resultDollars', 'riskDollars', 'rMultiple', 'holdingMinutes', 'setup', 'model',
   'entryModel', 'htfDelivery', 'newsEvent', 'grade', 'emotionEntry', 'emotionExit', 'mistake',
@@ -225,6 +225,7 @@ app.get('/api/export/csv', (req, res) => {
   const trades = store.listTrades().map((t) => ({
     ...t,
     setupTags: Array.isArray(t.setupTags) ? t.setupTags.join('; ') : (t.setupTags || ''),
+    exits: Array.isArray(t.exits) ? t.exits.map((p) => `${p.qty}@${p.price}`).join('; ') : '',
   }));
   const text = csv.stringify(trades, CSV_COLUMNS);
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -232,12 +233,71 @@ app.get('/api/export/csv', (req, res) => {
   res.send(text);
 });
 
+// ---- Tradovate "Performance" export support ----
+// Tradovate exports round-trips with its own column names (buyPrice, sellPrice,
+// boughtTimestamp, soldTimestamp, qty…). Whichever side filled first is the
+// entry, which also determines long vs short.
+function parseTradovateStamp(s) {
+  // "MM/DD/YYYY HH:mm:ss" (optionally with seconds)
+  const m = String(s || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  const pad = (x) => String(x).padStart(2, '0');
+  return {
+    date: `${m[3]}-${pad(m[1])}-${pad(m[2])}`,
+    time: `${pad(m[4])}:${m[5]}`,
+    ms: new Date(+m[3], +m[1] - 1, +m[2], +m[4], +m[5], +(m[6] || 0)).getTime(),
+  };
+}
+function tradovateBaseSymbol(s) {
+  // "MNQU5" / "NQZ25" -> "MNQ" / "NQ" (strip month code + year digits)
+  const raw = String(s || '').trim().toUpperCase();
+  const m = raw.match(/^([A-Z]+)[FGHJKMNQUVXZ]\d{1,2}$/);
+  return m ? m[1] : raw;
+}
+function isTradovatePerformance(objs) {
+  const first = objs[0] || {};
+  return 'buyPrice' in first && 'sellPrice' in first;
+}
+function mapTradovateRow(o) {
+  const cleanNum = (v) => String(v ?? '').replace(/[$,\s]/g, '');
+  const bought = parseTradovateStamp(o.boughtTimestamp);
+  const sold = parseTradovateStamp(o.soldTimestamp);
+  // Bought first = long; sold first = short. Missing stamps default to long.
+  const isLong = !bought || !sold || bought.ms <= sold.ms;
+  const entryStamp = isLong ? bought : sold;
+  const exitStamp = isLong ? sold : bought;
+  return {
+    date: (entryStamp && entryStamp.date) || '',
+    time: (entryStamp && entryStamp.time) || '',
+    exitTime: (exitStamp && exitStamp.time) || '',
+    symbol: tradovateBaseSymbol(o.symbol),
+    direction: isLong ? 'long' : 'short',
+    entry: cleanNum(isLong ? o.buyPrice : o.sellPrice),
+    exit: cleanNum(isLong ? o.sellPrice : o.buyPrice),
+    contracts: cleanNum(o.qty),
+    source: 'tradovate-csv',
+    sourceId: [o.buyFillId, o.sellFillId].filter(Boolean).join('-') || null,
+  };
+}
+
+// Parse "2@29550; 1@29600" back into an exits array.
+function parseExits(s) {
+  return String(s || '').split(/[;,]/).map((part) => {
+    const m = part.trim().match(/^(\d+(?:\.\d+)?)\s*@\s*(\d+(?:\.\d+)?)$/);
+    return m ? { qty: Number(m[1]), price: Number(m[2]) } : null;
+  }).filter(Boolean);
+}
+
 // ---- CSV import (append). Body: { csv: "..." } ----
 app.post('/api/import/csv', (req, res) => {
   const text = (req.body && req.body.csv) || '';
   if (!text.trim()) return res.status(400).json({ error: 'empty csv' });
   let objs;
   try { objs = csv.toObjects(text); } catch (e) { return res.status(400).json({ error: 'parse error' }); }
+  if (isTradovatePerformance(objs)) {
+    const count = store.bulkAdd(objs.map(mapTradovateRow));
+    return res.json({ imported: count, format: 'tradovate' });
+  }
   const mapped = objs.map((o) => ({
     date: o.date || o.Date || '',
     time: o.time || o.Time || '',
@@ -245,6 +305,7 @@ app.post('/api/import/csv', (req, res) => {
     direction: (o.direction || o.Direction || 'long').toLowerCase().startsWith('s') ? 'short' : 'long',
     entry: o.entry ?? o.Entry ?? '',
     exit: o.exit ?? o.Exit ?? '',
+    exits: parseExits(o.exits ?? o.Exits ?? o['Partial exits']),
     contracts: o.contracts ?? o.Contracts ?? o.qty ?? o.Qty ?? '',
     stopLoss: o.stopLoss ?? o.stop ?? o.Stop ?? '',
     takeProfit: o.takeProfit ?? o.target ?? o.Target ?? '',

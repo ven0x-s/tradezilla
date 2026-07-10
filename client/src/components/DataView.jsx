@@ -75,7 +75,7 @@ export default function DataView({ trades, onChanged, notify }) {
       </div>
       <div className="card">
         <h3>Import CSV</h3>
-        <p className="hint">Append trades from a CSV. Recognised columns: date, time, symbol, direction, entry, exit, contracts, stopLoss, takeProfit, commissions, setup, session, notes.</p>
+        <p className="hint">Append trades from a CSV. Recognised columns: date, time, symbol, direction, entry, exit, exits (e.g. "2@29550; 1@29600"), contracts, stopLoss, takeProfit, commissions, setup, session, notes. Tradovate Performance exports (buyPrice/sellPrice/qty…) are detected and mapped automatically.</p>
         <input ref={csvRef} type="file" accept=".csv,text/csv" onChange={importCsv} disabled={busy} />
       </div>
       <div className="card">

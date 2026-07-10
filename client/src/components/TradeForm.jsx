@@ -54,7 +54,7 @@ function ChoiceField({ label, value, options, onChange, placeholder, full }) {
 
 const blank = () => ({
   date: todayISO(), time: '', exitTime: '', symbol: 'NQ', direction: 'long',
-  entry: '', exit: '', contracts: '1', stopLoss: '', takeProfit: '',
+  entry: '', exit: '', exits: [], contracts: '1', stopLoss: '', takeProfit: '',
   pointValue: String(defaultPointValue('NQ')), commissions: '', setup: '',
   model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '',
   emotionEntry: '', emotionExit: '', mistake: '',
@@ -117,6 +117,18 @@ export default function TradeForm({ trade, playbooks = [], onClose, onSaved, not
 
   const preview = useMemo(() => previewMetrics(form), [form]);
   const tvValid = isTradingViewUrl(form.tvUrl);
+  const exits = Array.isArray(form.exits) ? form.exits : [];
+  const hasPartials = exits.some((p) => p.qty !== '' || p.price !== '');
+
+  function setExit(i, k, v) {
+    setForm((f) => ({ ...f, exits: f.exits.map((p, j) => (j === i ? { ...p, [k]: v } : p)) }));
+  }
+  function addExit() {
+    setForm((f) => ({ ...f, exits: [...(f.exits || []), { qty: '', price: '' }] }));
+  }
+  function removeExit(i) {
+    setForm((f) => ({ ...f, exits: f.exits.filter((_, j) => j !== i) }));
+  }
 
   // Digit keys 1-9 quick-toggle setup tags; S saves — unless typing in a field.
   useEffect(() => {
@@ -250,11 +262,44 @@ export default function TradeForm({ trade, playbooks = [], onClose, onSaved, not
             </div>
             <div className="field">
               <label>Exit price</label>
-              <input type="number" step="any" value={form.exit || ''} onChange={(e) => set('exit', e.target.value)} />
+              <input
+                type="number" step="any" value={hasPartials ? '' : (form.exit || '')}
+                onChange={(e) => set('exit', e.target.value)}
+                disabled={hasPartials}
+                placeholder={hasPartials ? `avg ${fmtNum(preview.avgExit, 2)}` : ''}
+              />
+              {hasPartials && <div className="hint">Auto: weighted avg of partials</div>}
             </div>
             <div className="field">
               <label>Point value ($)</label>
               <input type="number" step="any" value={form.pointValue || ''} onChange={(e) => set('pointValue', e.target.value)} />
+            </div>
+
+            <div className="field full">
+              <label>Partial exits (scale-out)</label>
+              {exits.map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <input
+                    type="number" min="0" step="1" value={p.qty} style={{ width: 90 }}
+                    onChange={(e) => setExit(i, 'qty', e.target.value)} placeholder="Qty"
+                  />
+                  <span className="hint">@</span>
+                  <input
+                    type="number" step="any" value={p.price} style={{ width: 150 }}
+                    onChange={(e) => setExit(i, 'price', e.target.value)} placeholder="Price"
+                  />
+                  <button type="button" className="btn ghost" onClick={() => removeExit(i)}>×</button>
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button type="button" className="btn ghost" onClick={addExit}>+ Add partial</button>
+                {hasPartials && preview.avgExit != null && (
+                  <span className="hint">
+                    {preview.exitQty} contract{preview.exitQty === 1 ? '' : 's'} out · avg exit {fmtNum(preview.avgExit, 2)}
+                  </span>
+                )}
+              </div>
+              {!exits.length && <div className="hint">Scaled out in pieces? Add each partial (e.g. 2 @ 29550, 1 @ 29600, 1 @ BE). Exit price and P&amp;L are computed from them.</div>}
             </div>
 
             <div className="field">
@@ -458,10 +503,15 @@ function normalize(t) {
   });
   o.screenshots = t.screenshots || [];
   o.setupTags = setupTagsOf(t);
+  o.exits = Array.isArray(t.exits)
+    ? t.exits.map((p) => ({ qty: p.qty == null ? '' : String(p.qty), price: p.price == null ? '' : String(p.price) }))
+    : [];
   return o;
 }
 
 function stripComputed(form) {
   const { id, resultPoints, resultDollars, riskDollars, rMultiple, holdingMinutes, screenshots, createdAt, updatedAt, ...rest } = form;
+  // Drop empty partial rows; the server treats a non-empty list as the exit.
+  rest.exits = (Array.isArray(form.exits) ? form.exits : []).filter((p) => p.qty !== '' && p.price !== '');
   return rest;
 }

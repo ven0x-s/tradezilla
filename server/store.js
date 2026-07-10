@@ -43,10 +43,26 @@ function writeAll(trades) {
   fs.renameSync(tmp, DB_FILE);
 }
 
+// Partial exits: [{ qty, price }, …]. When present, the effective exit is the
+// qty-weighted average price and contracts default to the summed partial qty,
+// so total P&L equals the sum of the individual scale-outs.
+function normalizeExits(t) {
+  if (!Array.isArray(t.exits)) return [];
+  return t.exits
+    .map((p) => ({ qty: num(p && p.qty), price: num(p && p.price) }))
+    .filter((p) => p.qty > 0 && p.price != null);
+}
+
 function computeMetrics(t) {
   const entry = num(t.entry);
-  const exit = num(t.exit);
-  const contracts = num(t.contracts) || 0;
+  let exit = num(t.exit);
+  let contracts = num(t.contracts) || 0;
+  const partials = normalizeExits(t);
+  if (partials.length) {
+    const qtySum = partials.reduce((s, p) => s + p.qty, 0);
+    exit = +(partials.reduce((s, p) => s + p.price * p.qty, 0) / qtySum).toFixed(4);
+    if (!contracts) contracts = qtySum;
+  }
   const pv = num(t.pointValue) || defaultPointValue(t.symbol);
   const commissions = num(t.commissions) || 0;
   const dir = t.direction === 'short' ? -1 : 1;
@@ -80,6 +96,9 @@ function computeMetrics(t) {
 
   return {
     pointValue: pv,
+    // Effective values (partials-aware) so the UI can display them directly.
+    exit: exit,
+    contracts: contracts || null,
     resultPoints,
     resultDollars,
     riskDollars: riskDollars != null ? +riskDollars.toFixed(2) : null,
@@ -93,7 +112,7 @@ function decorate(t) {
 }
 
 const FIELDS = [
-  'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'contracts',
+  'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'exits', 'contracts',
   'stopLoss', 'takeProfit', 'commissions', 'pointValue', 'setup',
   'model', 'entryModel', 'htfDelivery', 'newsEvent', 'grade',
   'emotionEntry', 'emotionExit', 'mistake',
