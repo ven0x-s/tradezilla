@@ -1,98 +1,100 @@
 import React, { useMemo } from 'react';
-import { computeStats, equitySeries } from '../helpers.js';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { computeStats, equitySeries, fmtUSD, fmtNum } from '../helpers.js';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import PropFirmsView from './PropFirmsView.jsx';
 
-export default function AccountsView({ trades = [], propfirms = [] }) {
-  const accountPerformance = useMemo(() => {
-    const perf = {};
+const cls = (n) => (n > 0 ? 'pos' : n < 0 ? 'neg' : '');
+
+// Manage prop firms/accounts and track performance per account.
+export default function AccountsView({ trades = [], propfirms = [], onUpdate, notify }) {
+  const rows = useMemo(() => {
+    const out = [];
     for (const f of propfirms) {
       for (const a of (f.accounts || [])) {
-        const accountTrades = trades.filter((t) => t.accountId === a.id);
-        const stats = computeStats(accountTrades);
-        const eq = equitySeries(accountTrades);
-        perf[a.id] = {
-          firmName: f.name,
-          accountType: a.type,
-          accountName: a.name,
-          startingBalance: a.balance,
-          ...stats,
-          equity: eq,
-          tradeCount: accountTrades.length,
-        };
+        const accTrades = trades.filter((t) => t.accountId === a.id);
+        out.push({
+          id: a.id, firm: f.name, type: a.type, name: a.name, balance: a.balance || 0,
+          stats: computeStats(accTrades), equity: equitySeries(accTrades),
+        });
       }
     }
-    return perf;
+    return out;
   }, [trades, propfirms]);
 
-  const withTrades = Object.entries(accountPerformance)
-    .filter(([_, p]) => p.tradeCount > 0)
-    .sort(([_, a], [__, b]) => (b.totalPnl || 0) - (a.totalPnl || 0));
-
-  if (withTrades.length === 0) {
-    return (
-      <div>
-        <h2>Account performance</h2>
-        <div className="hint">No trades linked to accounts yet. Create trades and select an account to start tracking per-account performance.</div>
-      </div>
-    );
-  }
+  const withTrades = rows.filter((r) => r.stats.count > 0);
 
   return (
     <div>
-      <h2>Account performance</h2>
+      <h2 style={{ marginTop: 0 }}>Prop firms &amp; accounts</h2>
+      <PropFirmsView propfirms={propfirms} onUpdate={onUpdate} notify={notify} />
 
-      <div style={{ display: 'grid', gap: 24 }}>
-        {withTrades.map(([accId, perf]) => (
-          <div key={accId} className="card">
-            <h3>{perf.firmName} — {perf.accountType} ({perf.accountName})</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
-              <div>
-                <div className="hint">Starting balance</div>
-                <b>${perf.startingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</b>
-              </div>
-              <div>
-                <div className="hint">Current balance</div>
-                <b className={perf.totalPnl > 0 ? 'pos' : perf.totalPnl < 0 ? 'neg' : ''}>
-                  ${(perf.startingBalance + (perf.totalPnl || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </b>
-              </div>
-              <div>
-                <div className="hint">Total P&L</div>
-                <b className={perf.totalPnl > 0 ? 'pos' : perf.totalPnl < 0 ? 'neg' : ''}>
-                  ${(perf.totalPnl || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </b>
-              </div>
-              <div>
-                <div className="hint">Trades</div>
-                <b>{perf.tradeCount}</b>
-              </div>
-              <div>
-                <div className="hint">Win rate</div>
-                <b>{perf.winRate ?? 0}%</b>
-              </div>
-              <div>
-                <div className="hint">Avg R</div>
-                <b>{(perf.avgR || 0).toFixed(2)}</b>
-              </div>
+      {rows.length > 0 && (
+        <>
+          <h2>All accounts</h2>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div className="table-wrap">
+              <table style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left' }}>Firm</th>
+                    <th style={{ textAlign: 'left' }}>Type</th>
+                    <th style={{ textAlign: 'left' }}>Account</th>
+                    <th style={{ textAlign: 'right' }}>Balance</th>
+                    <th style={{ textAlign: 'right' }}>Journal P&amp;L</th>
+                    <th style={{ textAlign: 'right' }}>Trades</th>
+                    <th style={{ textAlign: 'right' }}>Win %</th>
+                    <th style={{ textAlign: 'right' }}>Avg R</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id}>
+                      <td>{r.firm}</td>
+                      <td>{r.type || '-'}</td>
+                      <td>{r.name}</td>
+                      <td className="num" style={{ textAlign: 'right' }}>{fmtUSD(r.balance)}</td>
+                      <td className={'num ' + cls(r.stats.totalPnl)} style={{ textAlign: 'right' }}>{r.stats.count ? fmtUSD(r.stats.totalPnl) : '-'}</td>
+                      <td className="num" style={{ textAlign: 'right' }}>{r.stats.count}</td>
+                      <td className="num" style={{ textAlign: 'right' }}>{r.stats.count ? r.stats.winRate.toFixed(0) + '%' : '-'}</td>
+                      <td className="num" style={{ textAlign: 'right' }}>{r.stats.avgR == null ? '-' : fmtNum(r.stats.avgR)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-
-            {perf.equity && perf.equity.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <h4 style={{ marginTop: 0 }}>Equity curve</h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={perf.equity}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="i" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="equity" stroke="#3b82f6" dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+            <div className="hint" style={{ marginTop: 8 }}>
+              Balance is the value you set on the account (edit it above to match your platform's Net Liq). Journal P&amp;L comes from trades linked to the account.
+            </div>
           </div>
-        ))}
-      </div>
+        </>
+      )}
+
+      {withTrades.length > 0 && <h2>Equity curves</h2>}
+      {withTrades.map((r) => (
+        <div key={r.id} className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>{r.firm} — {r.name} {r.type ? `(${r.type})` : ''}</h3>
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
+            <div><span className="hint">Balance</span><br /><b>{fmtUSD(r.balance)}</b></div>
+            <div><span className="hint">Journal P&amp;L</span><br /><b className={cls(r.stats.totalPnl)}>{fmtUSD(r.stats.totalPnl)}</b></div>
+            <div><span className="hint">Trades</span><br /><b>{r.stats.count}</b></div>
+            <div><span className="hint">Win rate</span><br /><b>{r.stats.winRate.toFixed(1)}%</b></div>
+            <div><span className="hint">Avg R</span><br /><b>{r.stats.avgR == null ? '-' : fmtNum(r.stats.avgR)}</b></div>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={r.equity}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.2)" />
+              <XAxis dataKey="i" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(v) => fmtUSD(v)} labelFormatter={(i) => `Trade #${i}`} />
+              <Line type="monotone" dataKey="equity" stroke="#3b82f6" dot={false} strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      ))}
+
+      {rows.length > 0 && withTrades.length === 0 && (
+        <div className="hint">No trades linked to accounts yet — pick the account in the trade form ("Account (prop firm)") to start tracking per-account performance.</div>
+      )}
     </div>
   );
 }

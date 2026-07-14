@@ -437,9 +437,13 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
               <label>Account (prop firm)</label>
               <select value={form.accountId || ''} onChange={(e) => set('accountId', e.target.value)}>
                 <option value="">- none -</option>
-                {propfirms.flatMap((f) => (f.accounts || []).map((a) => (
-                  <option key={a.id} value={a.id}>{f.name} - {a.type} ({a.name})</option>
-                )))}
+                {propfirms.map((f) => (
+                  <optgroup key={f.id} label={f.name}>
+                    {(f.accounts || []).map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}{a.type ? ` · ${a.type}` : ''}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </div>
             <div className="field">

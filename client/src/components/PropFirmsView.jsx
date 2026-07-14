@@ -1,211 +1,172 @@
 import React, { useState } from 'react';
 import { api } from '../api.js';
+import { ACCOUNT_TYPES, fmtUSD } from '../helpers.js';
 
+const emptyAccForm = { type: 'Eval', name: '', balance: '' };
+
+// Manage prop firms and their accounts (type, name, current balance).
 export default function PropFirmsView({ propfirms = [], onUpdate, notify }) {
-  const [editing, setEditing] = useState(null);
   const [newFirm, setNewFirm] = useState('');
-  const [expanding, setExpanding] = useState({});
-  const [addingAcc, setAddingAcc] = useState(null);
-  const [accForm, setAccForm] = useState({ type: '', name: '', balance: '' });
-  const [editingAcc, setEditingAcc] = useState(null);
+  const [renaming, setRenaming] = useState(null);   // firm id
+  const [renameText, setRenameText] = useState('');
+  const [accForms, setAccForms] = useState({});     // firmId -> {type,name,balance}
+  const [editingAcc, setEditingAcc] = useState(null); // account id
+  const [accDraft, setAccDraft] = useState(emptyAccForm);
 
-  async function createFirm() {
-    if (!newFirm.trim()) return notify('Firm name is required');
-    try {
-      await api.createPropfirm({ name: newFirm });
-      setNewFirm('');
-      onUpdate();
-      notify('Firm created');
-    } catch (e) {
-      notify('Error: ' + e.message);
-    }
+  const accForm = (firmId) => accForms[firmId] || emptyAccForm;
+  const setAccForm = (firmId, patch) =>
+    setAccForms((f) => ({ ...f, [firmId]: { ...accForm(firmId), ...patch } }));
+
+  async function run(fn, okMsg) {
+    try { await fn(); onUpdate(); if (okMsg) notify(okMsg); }
+    catch (e) { notify('Error: ' + e.message); }
   }
 
-  async function updateFirm(id, name) {
-    try {
-      await api.updatePropfirm(id, { name });
-      setEditing(null);
-      onUpdate();
-      notify('Firm updated');
-    } catch (e) {
-      notify('Error: ' + e.message);
-    }
+  function createFirm() {
+    const name = newFirm.trim();
+    if (!name) return notify('Firm name is required');
+    run(async () => { await api.createPropfirm({ name }); setNewFirm(''); }, 'Firm added');
   }
 
-  async function deleteFirm(id) {
-    if (!confirm('Delete this firm?')) return;
-    try {
-      await api.deletePropfirm(id);
-      onUpdate();
-      notify('Firm deleted');
-    } catch (e) {
-      notify('Error: ' + e.message);
-    }
+  function saveRename(firm) {
+    const name = renameText.trim();
+    setRenaming(null);
+    if (!name || name === firm.name) return;
+    run(() => api.updatePropfirm(firm.id, { name }), 'Firm renamed');
   }
 
-  async function addAccount(firmId) {
-    if (!accForm.type.trim() || !accForm.name.trim()) return notify('Type and name are required');
-    try {
-      await api.addAccount(firmId, {
-        type: accForm.type,
-        name: accForm.name,
-        balance: Number(accForm.balance) || 0,
-      });
-      setAddingAcc(null);
-      setAccForm({ type: '', name: '', balance: '' });
-      onUpdate();
-      notify('Account added');
-    } catch (e) {
-      notify('Error: ' + e.message);
-    }
+  function deleteFirm(f) {
+    if (!confirm(`Delete ${f.name} and its ${(f.accounts || []).length} account(s)? Trades keep their data.`)) return;
+    run(() => api.deletePropfirm(f.id), 'Firm deleted');
   }
 
-  async function updateAccount(firmId, accId, type, name, balance) {
-    try {
-      await api.updateAccount(firmId, accId, {
-        type,
-        name,
-        balance: Number(balance) || 0,
-      });
-      setEditingAcc(null);
-      onUpdate();
-      notify('Account updated');
-    } catch (e) {
-      notify('Error: ' + e.message);
-    }
+  function addAccount(firmId) {
+    const form = accForm(firmId);
+    if (!form.name.trim()) return notify('Account name is required');
+    run(async () => {
+      await api.addAccount(firmId, { type: form.type, name: form.name.trim(), balance: Number(form.balance) || 0 });
+      setAccForms((f) => ({ ...f, [firmId]: { ...emptyAccForm, type: form.type } }));
+    }, 'Account added');
   }
 
-  async function deleteAccount(firmId, accId) {
-    if (!confirm('Delete this account?')) return;
-    try {
-      await api.deleteAccount(firmId, accId);
-      onUpdate();
-      notify('Account deleted');
-    } catch (e) {
-      notify('Error: ' + e.message);
-    }
+  function startEditAcc(a) {
+    setEditingAcc(a.id);
+    setAccDraft({ type: a.type || 'Eval', name: a.name || '', balance: String(a.balance ?? '') });
   }
+
+  function saveAcc(firmId, accId) {
+    if (!accDraft.name.trim()) return notify('Account name is required');
+    setEditingAcc(null);
+    run(() => api.updateAccount(firmId, accId, {
+      type: accDraft.type, name: accDraft.name.trim(), balance: Number(accDraft.balance) || 0,
+    }), 'Account updated');
+  }
+
+  function deleteAcc(firmId, a) {
+    if (!confirm(`Remove account ${a.name}? Trades linked to it keep their data.`)) return;
+    run(() => api.deleteAccount(firmId, a.id), 'Account removed');
+  }
+
+  const typeSelect = (value, onChange) => (
+    <select value={value} onChange={(e) => onChange(e.target.value)} style={{ width: 130 }}>
+      {ACCOUNT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+    </select>
+  );
 
   return (
     <div>
-      <h2>Prop firms & accounts</h2>
-
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3>Add new firm</h3>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h3>Add prop firm</h3>
+        <div style={{ display: 'flex', gap: 8 }}>
           <input
             value={newFirm} onChange={(e) => setNewFirm(e.target.value)}
-            placeholder="Firm name (e.g. Topstep, Apex)" style={{ flex: 1 }}
+            placeholder="Firm name (e.g. Apex, Topstep, TPT)" style={{ flex: 1, maxWidth: 340 }}
             onKeyDown={(e) => e.key === 'Enter' && createFirm()}
           />
-          <button className="btn" onClick={createFirm}>+ Add</button>
+          <button className="btn" onClick={createFirm}>+ Add firm</button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gap: 16 }}>
-        {propfirms.map((f) => (
-          <div key={f.id} className="card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <div style={{ flex: 1 }}>
-                {editing === f.id ? (
-                  <input
-                    autoFocus value={f.name} onChange={(e) => setEditing(null)}
-                    onBlur={() => updateFirm(f.id, f.name)}
-                    onKeyDown={(e) => e.key === 'Enter' && updateFirm(f.id, f.name)}
-                  />
-                ) : (
-                  <h3 style={{ margin: 0, cursor: 'pointer' }} onClick={() => setEditing(f.id)}>
-                    {f.name}
-                  </h3>
-                )}
-              </div>
-              <button className="btn ghost" onClick={() => deleteFirm(f.id)}>Delete</button>
-              <button className="btn ghost" onClick={() => setExpanding((ex) => ({ ...ex, [f.id]: !ex[f.id] }))}>
-                {expanding[f.id] ? '▼' : '▶'} {(f.accounts || []).length} account{(f.accounts || []).length === 1 ? '' : 's'}
-              </button>
-            </div>
-
-            {expanding[f.id] && (
-              <>
-                <table style={{ width: '100%', marginBottom: 16 }}>
-                  <tbody>
-                    {(f.accounts || []).map((a) => (
-                      <tr key={a.id}>
-                        <td style={{ padding: '8px 0' }}>
-                          {editingAcc === a.id ? (
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <input
-                                value={a.type} onChange={(e) => setEditingAcc(null)}
-                                placeholder="Type" style={{ width: 100 }}
-                                onBlur={() => updateAccount(f.id, a.id, a.type, a.name, a.balance)}
-                              />
-                              <input
-                                value={a.name} onChange={(e) => setEditingAcc(null)}
-                                placeholder="Name" style={{ flex: 1 }}
-                                onBlur={() => updateAccount(f.id, a.id, a.type, a.name, a.balance)}
-                              />
-                              <input
-                                type="number" value={a.balance} onChange={(e) => setEditingAcc(null)}
-                                placeholder="Balance" style={{ width: 100 }}
-                                onBlur={() => updateAccount(f.id, a.id, a.type, a.name, a.balance)}
-                              />
-                              <button className="btn ghost" onClick={() => setEditingAcc(null)}>×</button>
-                            </div>
-                          ) : (
-                            <>
-                              <span style={{ fontWeight: 600 }}>{a.type}</span> {a.name}
-                              <span className="hint" style={{ float: 'right' }}>
-                                ${a.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                              </span>
-                              <button
-                                className="btn ghost" style={{ fontSize: 12, marginLeft: 12 }}
-                                onClick={() => setEditingAcc(a.id)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="btn ghost" style={{ fontSize: 12 }}
-                                onClick={() => deleteAccount(f.id, a.id)}
-                              >
-                                Remove
-                              </button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {addingAcc === f.id ? (
-                  <div style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 4, marginBottom: 12 }}>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                      <input
-                        placeholder="Type (Eval, Funded, etc.)" value={accForm.type}
-                        onChange={(e) => setAccForm({ ...accForm, type: e.target.value })} style={{ width: 120 }}
-                      />
-                      <input
-                        placeholder="Account name" value={accForm.name}
-                        onChange={(e) => setAccForm({ ...accForm, name: e.target.value })} style={{ flex: 1 }}
-                      />
-                      <input
-                        type="number" placeholder="Starting balance" value={accForm.balance}
-                        onChange={(e) => setAccForm({ ...accForm, balance: e.target.value })} style={{ width: 120 }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn" onClick={() => addAccount(f.id)}>Add account</button>
-                      <button className="btn ghost" onClick={() => { setAddingAcc(null); setAccForm({ type: '', name: '', balance: '' }); }}>Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <button className="btn ghost" onClick={() => setAddingAcc(f.id)}>+ Add account</button>
-                )}
-              </>
+      {propfirms.map((f) => (
+        <div key={f.id} className="card" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            {renaming === f.id ? (
+              <input
+                autoFocus value={renameText} onChange={(e) => setRenameText(e.target.value)}
+                onBlur={() => saveRename(f)}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveRename(f); if (e.key === 'Escape') setRenaming(null); }}
+                style={{ maxWidth: 240 }}
+              />
+            ) : (
+              <h3 style={{ margin: 0 }}>{f.name}</h3>
             )}
+            <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => { setRenaming(f.id); setRenameText(f.name); }}>Rename</button>
+            <div style={{ flex: 1 }} />
+            <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => deleteFirm(f)}>Delete firm</button>
           </div>
-        ))}
-      </div>
+
+          {(f.accounts || []).length > 0 && (
+            <div className="table-wrap" style={{ marginBottom: 10 }}>
+              <table style={{ width: '100%' }}>
+                <thead>
+                  <tr><th style={{ textAlign: 'left' }}>Type</th><th style={{ textAlign: 'left' }}>Account name</th><th className="num" style={{ textAlign: 'right' }}>Balance</th><th /></tr>
+                </thead>
+                <tbody>
+                  {f.accounts.map((a) => (
+                    <tr key={a.id}>
+                      {editingAcc === a.id ? (
+                        <>
+                          <td>{typeSelect(accDraft.type, (v) => setAccDraft((d) => ({ ...d, type: v })))}</td>
+                          <td><input value={accDraft.name} onChange={(e) => setAccDraft((d) => ({ ...d, name: e.target.value }))} /></td>
+                          <td className="num">
+                            <input
+                              type="number" step="any" value={accDraft.balance} style={{ width: 130, textAlign: 'right' }}
+                              onChange={(e) => setAccDraft((d) => ({ ...d, balance: e.target.value }))}
+                            />
+                          </td>
+                          <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <button className="btn" style={{ fontSize: 12 }} onClick={() => saveAcc(f.id, a.id)}>Save</button>{' '}
+                            <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => setEditingAcc(null)}>Cancel</button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{a.type || '-'}</td>
+                          <td>{a.name}</td>
+                          <td className="num" style={{ textAlign: 'right' }}>{fmtUSD(a.balance || 0)}</td>
+                          <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => startEditAcc(a)}>Edit</button>{' '}
+                            <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => deleteAcc(f.id, a)}>Remove</button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {typeSelect(accForm(f.id).type, (v) => setAccForm(f.id, { type: v }))}
+            <input
+              placeholder="Account name (e.g. APEX4009070000055)" value={accForm(f.id).name}
+              onChange={(e) => setAccForm(f.id, { name: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && addAccount(f.id)}
+              style={{ flex: 1, minWidth: 220, maxWidth: 340 }}
+            />
+            <input
+              type="number" step="any" placeholder="Current balance" value={accForm(f.id).balance}
+              onChange={(e) => setAccForm(f.id, { balance: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && addAccount(f.id)}
+              style={{ width: 150 }}
+            />
+            <button className="btn" onClick={() => addAccount(f.id)}>+ Add account</button>
+          </div>
+        </div>
+      ))}
+
+      {!propfirms.length && <div className="hint">No prop firms yet — add one above, then add its accounts (Eval, Funded…) with their names and balances.</div>}
     </div>
   );
 }
