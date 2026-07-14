@@ -4,6 +4,14 @@ import { ACCOUNT_TYPES, fmtUSD } from '../helpers.js';
 
 const emptyAccForm = { type: 'Eval', name: '', balance: '' };
 
+export const ACCOUNT_STATUSES = ['active', 'passed', 'blown'];
+export const statusColor = (s) =>
+  s === 'passed' ? 'var(--pos)' : s === 'blown' ? 'var(--neg)' : 'var(--accent)';
+export const statusLabel = (s) => {
+  const v = ACCOUNT_STATUSES.includes(s) ? s : 'active';
+  return v.charAt(0).toUpperCase() + v.slice(1);
+};
+
 // Manage prop firms and their accounts (type, name, current balance).
 export default function PropFirmsView({ propfirms = [], onUpdate, notify }) {
   const [newFirm, setNewFirm] = useState('');
@@ -51,15 +59,19 @@ export default function PropFirmsView({ propfirms = [], onUpdate, notify }) {
 
   function startEditAcc(a) {
     setEditingAcc(a.id);
-    setAccDraft({ type: a.type || 'Eval', name: a.name || '', balance: String(a.balance ?? '') });
+    setAccDraft({ type: a.type || 'Eval', name: a.name || '', balance: String(a.balance ?? ''), status: a.status || 'active' });
   }
 
   function saveAcc(firmId, accId) {
     if (!accDraft.name.trim()) return notify('Account name is required');
     setEditingAcc(null);
     run(() => api.updateAccount(firmId, accId, {
-      type: accDraft.type, name: accDraft.name.trim(), balance: Number(accDraft.balance) || 0,
+      type: accDraft.type, name: accDraft.name.trim(), balance: Number(accDraft.balance) || 0, status: accDraft.status,
     }), 'Account updated');
+  }
+
+  function setStatus(firmId, a, status) {
+    run(() => api.updateAccount(firmId, a.id, { status }), `${a.name}: ${statusLabel(status)}`);
   }
 
   function deleteAcc(firmId, a) {
@@ -70,6 +82,16 @@ export default function PropFirmsView({ propfirms = [], onUpdate, notify }) {
   const typeSelect = (value, onChange) => (
     <select value={value} onChange={(e) => onChange(e.target.value)} style={{ width: 130 }}>
       {ACCOUNT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+    </select>
+  );
+
+  const statusSelect = (value, onChange) => (
+    <select
+      value={ACCOUNT_STATUSES.includes(value) ? value : 'active'}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ width: 110, color: statusColor(value), fontWeight: 600 }}
+    >
+      {ACCOUNT_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
     </select>
   );
 
@@ -109,7 +131,7 @@ export default function PropFirmsView({ propfirms = [], onUpdate, notify }) {
             <div className="table-wrap" style={{ marginBottom: 10 }}>
               <table style={{ width: '100%' }}>
                 <thead>
-                  <tr><th style={{ textAlign: 'left' }}>Type</th><th style={{ textAlign: 'left' }}>Account name</th><th className="num" style={{ textAlign: 'right' }}>Balance</th><th /></tr>
+                  <tr><th style={{ textAlign: 'left' }}>Type</th><th style={{ textAlign: 'left' }}>Account name</th><th className="num" style={{ textAlign: 'right' }}>Balance</th><th style={{ textAlign: 'left' }}>Status</th><th /></tr>
                 </thead>
                 <tbody>
                   {f.accounts.map((a) => (
@@ -124,6 +146,7 @@ export default function PropFirmsView({ propfirms = [], onUpdate, notify }) {
                               onChange={(e) => setAccDraft((d) => ({ ...d, balance: e.target.value }))}
                             />
                           </td>
+                          <td>{statusSelect(accDraft.status, (v) => setAccDraft((d) => ({ ...d, status: v })))}</td>
                           <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                             <button className="btn" style={{ fontSize: 12 }} onClick={() => saveAcc(f.id, a.id)}>Save</button>{' '}
                             <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => setEditingAcc(null)}>Cancel</button>
@@ -132,8 +155,9 @@ export default function PropFirmsView({ propfirms = [], onUpdate, notify }) {
                       ) : (
                         <>
                           <td>{a.type || '-'}</td>
-                          <td>{a.name}</td>
+                          <td style={a.status === 'blown' ? { opacity: 0.6 } : undefined}>{a.name}</td>
                           <td className="num" style={{ textAlign: 'right' }}>{fmtUSD(a.balance || 0)}</td>
+                          <td>{statusSelect(a.status, (v) => setStatus(f.id, a, v))}</td>
                           <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                             <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => startEditAcc(a)}>Edit</button>{' '}
                             <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => deleteAcc(f.id, a)}>Remove</button>

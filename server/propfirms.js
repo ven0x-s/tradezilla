@@ -62,6 +62,9 @@ function deleteFirm(id) {
   return true;
 }
 
+const ACCOUNT_STATUSES = ['active', 'passed', 'blown'];
+const validStatus = (s) => (ACCOUNT_STATUSES.includes(s) ? s : 'active');
+
 function addAccount(firmId, input) {
   const firms = readAll();
   const i = firms.findIndex((x) => x.id === firmId);
@@ -71,6 +74,7 @@ function addAccount(firmId, input) {
     type: input.type || '', // Eval, Funded, Demo Funded, Live
     name: input.name || '',
     balance: Number(input.balance) || 0,
+    status: validStatus(input.status),
     createdAt: new Date().toISOString(),
   };
   firms[i].accounts = firms[i].accounts || [];
@@ -89,6 +93,7 @@ function updateAccount(firmId, accId, input) {
   acc.type = input.type || acc.type;
   acc.name = input.name || acc.name;
   if (input.balance != null) acc.balance = Number(input.balance);
+  if (input.status != null) acc.status = validStatus(input.status);
   f.updatedAt = new Date().toISOString();
   writeAll(firms);
   return acc;

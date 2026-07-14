@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { computeStats, equitySeries, fmtUSD, fmtNum } from '../helpers.js';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import PropFirmsView from './PropFirmsView.jsx';
+import PropFirmsView, { statusColor, statusLabel } from './PropFirmsView.jsx';
 
 const cls = (n) => (n > 0 ? 'pos' : n < 0 ? 'neg' : '');
 
@@ -14,6 +14,7 @@ export default function AccountsView({ trades = [], propfirms = [], onUpdate, no
         const accTrades = trades.filter((t) => t.accountId === a.id);
         out.push({
           id: a.id, firm: f.name, type: a.type, name: a.name, balance: a.balance || 0,
+          status: a.status || 'active',
           stats: computeStats(accTrades), equity: equitySeries(accTrades),
         });
       }
@@ -39,6 +40,7 @@ export default function AccountsView({ trades = [], propfirms = [], onUpdate, no
                     <th style={{ textAlign: 'left' }}>Firm</th>
                     <th style={{ textAlign: 'left' }}>Type</th>
                     <th style={{ textAlign: 'left' }}>Account</th>
+                    <th style={{ textAlign: 'left' }}>Status</th>
                     <th style={{ textAlign: 'right' }}>Balance</th>
                     <th style={{ textAlign: 'right' }}>Journal P&amp;L</th>
                     <th style={{ textAlign: 'right' }}>Trades</th>
@@ -48,10 +50,11 @@ export default function AccountsView({ trades = [], propfirms = [], onUpdate, no
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.id}>
+                    <tr key={r.id} style={r.status === 'blown' ? { opacity: 0.65 } : undefined}>
                       <td>{r.firm}</td>
                       <td>{r.type || '-'}</td>
                       <td>{r.name}</td>
+                      <td style={{ color: statusColor(r.status), fontWeight: 600 }}>{statusLabel(r.status)}</td>
                       <td className="num" style={{ textAlign: 'right' }}>{fmtUSD(r.balance)}</td>
                       <td className={'num ' + cls(r.stats.totalPnl)} style={{ textAlign: 'right' }}>{r.stats.count ? fmtUSD(r.stats.totalPnl) : '-'}</td>
                       <td className="num" style={{ textAlign: 'right' }}>{r.stats.count}</td>
@@ -72,7 +75,10 @@ export default function AccountsView({ trades = [], propfirms = [], onUpdate, no
       {withTrades.length > 0 && <h2>Equity curves</h2>}
       {withTrades.map((r) => (
         <div key={r.id} className="card" style={{ marginBottom: 16 }}>
-          <h3 style={{ marginTop: 0 }}>{r.firm} — {r.name} {r.type ? `(${r.type})` : ''}</h3>
+          <h3 style={{ marginTop: 0 }}>
+            {r.firm} — {r.name} {r.type ? `(${r.type})` : ''}{' '}
+            <span style={{ color: statusColor(r.status), fontSize: 13, fontWeight: 600 }}>● {statusLabel(r.status)}</span>
+          </h3>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
             <div><span className="hint">Balance</span><br /><b>{fmtUSD(r.balance)}</b></div>
             <div><span className="hint">Journal P&amp;L</span><br /><b className={cls(r.stats.totalPnl)}>{fmtUSD(r.stats.totalPnl)}</b></div>

@@ -440,7 +440,9 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
                 {propfirms.map((f) => (
                   <optgroup key={f.id} label={f.name}>
                     {(f.accounts || []).map((a) => (
-                      <option key={a.id} value={a.id}>{a.name}{a.type ? ` · ${a.type}` : ''}</option>
+                      <option key={a.id} value={a.id}>
+                        {a.name}{a.type ? ` · ${a.type}` : ''}{a.status && a.status !== 'active' ? ` · ${a.status.toUpperCase()}` : ''}
+                      </option>
                     ))}
                   </optgroup>
                 ))}
