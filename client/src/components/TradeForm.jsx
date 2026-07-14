@@ -60,7 +60,7 @@ const blank = () => ({
   emotionEntry: '', emotionExit: '', mistake: '',
   session: 'NY', notes: '', rating: '', planFollowed: false, emotion: '', mistakes: '',
   setupTags: [], dailyBias: '', htfPda: '', drawOnLiquidity: '', narrative: '', po3: '',
-  tvUrl: '', accountType: '', propFirm: '', playbookId: '', rulesFollowed: true, ruleBroken: '',
+  tvUrl: '', accountType: '', propFirm: '', playbookId: '', rulesFollowed: true, ruleBroken: '', accountId: '',
   screenshots: [],
 });
 
@@ -106,7 +106,7 @@ function SetupTagsField({ value, onChange, tagRefs }) {
   );
 }
 
-export default function TradeForm({ trade, playbooks = [], onClose, onSaved, notify }) {
+export default function TradeForm({ trade, playbooks = [], propfirms = [], onClose, onSaved, notify }) {
   const [form, setForm] = useState(() => (trade ? normalize(trade) : blank()));
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState(null);
@@ -431,6 +431,15 @@ export default function TradeForm({ trade, playbooks = [], onClose, onSaved, not
               <select value={form.playbookId || ''} onChange={(e) => set('playbookId', e.target.value)}>
                 <option value="">- none -</option>
                 {playbooks.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Account (prop firm)</label>
+              <select value={form.accountId || ''} onChange={(e) => set('accountId', e.target.value)}>
+                <option value="">- none -</option>
+                {propfirms.flatMap((f) => (f.accounts || []).map((a) => (
+                  <option key={a.id} value={a.id}>{f.name} - {a.type} ({a.name})</option>
+                )))}
               </select>
             </div>
             <div className="field">

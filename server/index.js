@@ -9,6 +9,7 @@ const csv = require('./csv');
 const auth = require('./auth');
 const playbooks = require('./playbooks');
 const journal = require('./journal');
+const propfirms = require('./propfirms');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -210,6 +211,33 @@ app.delete('/api/journal/:id/screenshots/:sid', (req, res) => {
   res.json({ ok: true });
 });
 
+// ---- Prop firms & accounts ----
+app.get('/api/propfirms', (req, res) => res.json(propfirms.listFirms()));
+app.post('/api/propfirms', (req, res) => res.status(201).json(propfirms.createFirm(req.body || {})));
+app.put('/api/propfirms/:id', (req, res) => {
+  const f = propfirms.updateFirm(req.params.id, req.body || {});
+  if (!f) return res.status(404).json({ error: 'not found' });
+  res.json(f);
+});
+app.delete('/api/propfirms/:id', (req, res) => {
+  const ok = propfirms.deleteFirm(req.params.id);
+  res.json({ ok });
+});
+app.post('/api/propfirms/:firmId/accounts', (req, res) => {
+  const acc = propfirms.addAccount(req.params.firmId, req.body || {});
+  if (!acc) return res.status(404).json({ error: 'firm not found' });
+  res.status(201).json(acc);
+});
+app.put('/api/propfirms/:firmId/accounts/:accId', (req, res) => {
+  const acc = propfirms.updateAccount(req.params.firmId, req.params.accId, req.body || {});
+  if (!acc) return res.status(404).json({ error: 'account not found' });
+  res.json(acc);
+});
+app.delete('/api/propfirms/:firmId/accounts/:accId', (req, res) => {
+  const ok = propfirms.deleteAccount(req.params.firmId, req.params.accId);
+  res.json({ ok });
+});
+
 // ---- CSV export ----
 const CSV_COLUMNS = [
   'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'exits', 'contracts',
@@ -218,7 +246,7 @@ const CSV_COLUMNS = [
   'entryModel', 'htfDelivery', 'newsEvent', 'grade', 'emotionEntry', 'emotionExit', 'mistake',
   'emotion', 'mistakes', 'rating', 'planFollowed', 'session', 'notes',
   'setupTags', 'dailyBias', 'htfPda', 'drawOnLiquidity', 'narrative', 'po3',
-  'tvUrl', 'accountType', 'propFirm', 'rulesFollowed', 'ruleBroken',
+  'tvUrl', 'accountType', 'propFirm', 'rulesFollowed', 'ruleBroken', 'accountId',
 ];
 
 app.get('/api/export/csv', (req, res) => {
@@ -338,6 +366,7 @@ app.post('/api/import/csv', (req, res) => {
     ruleBroken: o.ruleBroken ?? o['Rule broken'] ?? '',
     session: o.session ?? o.Session ?? '',
     notes: o.notes ?? o.Notes ?? '',
+    accountId: o.accountId ?? o['Account ID'] ?? '',
   }));
   const count = store.bulkAdd(mapped);
   res.json({ imported: count });

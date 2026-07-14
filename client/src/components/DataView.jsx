@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { api } from '../api.js';
 import { todayISO } from '../helpers.js';
 import TradovateSettings from './TradovateSettings.jsx';
+import PropFirmsView from './PropFirmsView.jsx';
 
 export default function DataView({ trades, onChanged, notify }) {
   const csvRef = useRef();
@@ -10,8 +11,22 @@ export default function DataView({ trades, onChanged, notify }) {
   const [tvOpen, setTvOpen] = useState(false);
   const [syncDate, setSyncDate] = useState(todayISO());
   const [syncing, setSyncing] = useState(false);
+  const [propfirms, setPropfirms] = useState([]);
 
   function download(url) { window.open(url, '_blank'); }
+
+  async function loadPropfirms() {
+    try {
+      const pf = await api.listPropfirms();
+      setPropfirms(pf);
+    } catch (e) {
+      notify('Failed to load prop firms: ' + e.message);
+    }
+  }
+
+  React.useEffect(() => {
+    loadPropfirms();
+  }, []);
 
   async function importCsv(e) {
     const file = e.target.files[0];
@@ -90,6 +105,10 @@ export default function DataView({ trades, onChanged, notify }) {
       </div>
 
       {tvOpen && <TradovateSettings onClose={() => setTvOpen(false)} notify={notify} />}
+
+      <div style={{ gridColumn: '1 / -1', marginTop: 20 }}>
+        <PropFirmsView propfirms={propfirms} onUpdate={loadPropfirms} notify={notify} />
+      </div>
     </div>
   );
 }

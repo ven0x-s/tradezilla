@@ -66,4 +66,11 @@ export const api = {
     return req('/api/journal/' + id + '/screenshots', { method: 'POST', body: fd });
   },
   deleteJournalShot: (id, sid) => req('/api/journal/' + id + '/screenshots/' + sid, { method: 'DELETE' }),
+  listPropfirms: () => req('/api/propfirms'),
+  createPropfirm: (f) => req('/api/propfirms', { method: 'POST', headers: J, body: JSON.stringify(f) }),
+  updatePropfirm: (id, f) => req('/api/propfirms/' + id, { method: 'PUT', headers: J, body: JSON.stringify(f) }),
+  deletePropfirm: (id) => req('/api/propfirms/' + id, { method: 'DELETE' }),
+  addAccount: (firmId, a) => req('/api/propfirms/' + firmId + '/accounts', { method: 'POST', headers: J, body: JSON.stringify(a) }),
+  updateAccount: (firmId, accId, a) => req('/api/propfirms/' + firmId + '/accounts/' + accId, { method: 'PUT', headers: J, body: JSON.stringify(a) }),
+  deleteAccount: (firmId, accId) => req('/api/propfirms/' + firmId + '/accounts/' + accId, { method: 'DELETE' }),
 };

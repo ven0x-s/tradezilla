@@ -13,6 +13,8 @@ import ShareCard from './components/ShareCard.jsx';
 import PsychologyView from './components/PsychologyView.jsx';
 import PlaybookView from './components/PlaybookView.jsx';
 import MarketJournalView from './components/MarketJournalView.jsx';
+import PropFirmsView from './components/PropFirmsView.jsx';
+import AccountsView from './components/AccountsView.jsx';
 import HelpModal from './components/HelpModal.jsx';
 import QuickTradeForm from './components/QuickTradeForm.jsx';
 import { APP_VERSION } from './helpers.js';
@@ -25,6 +27,7 @@ const TABS = [
   ['analysis', 'Analysis'],
   ['psychology', 'Psychology'],
   ['playbook', 'Playbook'],
+  ['accounts', 'Accounts'],
   ['market', 'Market'],
   ['data', 'Data'],
 ];
@@ -37,6 +40,7 @@ export default function App() {
   const [needsRegister, setNeedsRegister] = useState(false);
   const [trades, setTrades] = useState([]);
   const [playbooks, setPlaybooks] = useState([]);
+  const [propfirms, setPropfirms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('dashboard');
@@ -110,7 +114,11 @@ export default function App() {
     try { setPlaybooks(await api.listPlaybooks()); } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => { if (user) { load(); loadPlaybooks(); } }, [user, load, loadPlaybooks]);
+  const loadPropfirms = useCallback(async () => {
+    try { setPropfirms(await api.listPropfirms()); } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { if (user) { load(); loadPlaybooks(); loadPropfirms(); } }, [user, load, loadPlaybooks, loadPropfirms]);
 
   function onAuthed(u) {
     setUser(u);
@@ -121,6 +129,7 @@ export default function App() {
     await api.logout();
     setUser(null);
     setTrades([]);
+    setPropfirms([]);
     setLoading(true);
   }
 
@@ -186,6 +195,7 @@ export default function App() {
             {tab === 'analysis' && <AnalysisView trades={filtered} playbooks={playbooks} />}
             {tab === 'psychology' && <PsychologyView trades={filtered} />}
             {tab === 'playbook' && <PlaybookView trades={trades} notify={notify} onChanged={loadPlaybooks} />}
+            {tab === 'accounts' && <AccountsView trades={trades} propfirms={propfirms} />}
             {tab === 'market' && <MarketJournalView notify={notify} />}
             {tab === 'data' && <DataView trades={trades} onChanged={load} notify={notify} />}
           </>
@@ -196,6 +206,7 @@ export default function App() {
         <TradeForm
           trade={editing.id ? editing : null}
           playbooks={playbooks}
+          propfirms={propfirms}
           onClose={() => setEditing(null)}
           onSaved={() => load()}
           notify={notify}
