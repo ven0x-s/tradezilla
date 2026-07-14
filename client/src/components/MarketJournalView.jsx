@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../api.js';
 import { DAILY_BIAS, todayISO } from '../helpers.js';
+import JournalShareCard from './JournalShareCard.jsx';
 
 const blank = () => ({ date: todayISO(), bias: '', traded: false, observations: '', reason: '', screenshots: [] });
 
@@ -111,9 +112,10 @@ function Editor({ initial, onClose, onSaved, notify }) {
   );
 }
 
-export default function MarketJournalView({ notify }) {
+export default function MarketJournalView({ notify, trades = [] }) {
   const [entries, setEntries] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [sharing, setSharing] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
   const load = async () => {
@@ -149,6 +151,7 @@ export default function MarketJournalView({ notify }) {
                 <span className={'tag ' + (en.traded ? '' : 'news')}>{en.traded ? 'Traded' : 'No trades'}</span>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
+                <button className="btn ghost sm" onClick={() => setSharing(en)}>Share</button>
                 <button className="btn ghost sm" onClick={() => setEditing(en)}>Edit</button>
                 <button className="btn danger sm" onClick={() => del(en)}>Del</button>
               </div>
@@ -172,6 +175,7 @@ export default function MarketJournalView({ notify }) {
           notify={notify}
         />
       )}
+      {sharing && <JournalShareCard entry={sharing} trades={trades} onClose={() => setSharing(null)} />}
     </div>
   );
 }

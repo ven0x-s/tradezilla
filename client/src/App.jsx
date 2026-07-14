@@ -196,7 +196,7 @@ export default function App() {
             {tab === 'psychology' && <PsychologyView trades={filtered} />}
             {tab === 'playbook' && <PlaybookView trades={trades} notify={notify} onChanged={loadPlaybooks} />}
             {tab === 'accounts' && <AccountsView trades={trades} propfirms={propfirms} onUpdate={loadPropfirms} notify={notify} />}
-            {tab === 'market' && <MarketJournalView notify={notify} />}
+            {tab === 'market' && <MarketJournalView notify={notify} trades={trades} />}
             {tab === 'data' && <DataView trades={trades} onChanged={load} notify={notify} />}
           </>
         )}

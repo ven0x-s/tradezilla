@@ -6,7 +6,7 @@ const W = 1200;
 const REPO_URL = 'https://github.com/ven0x-s/pugzilla';
 
 // Subtle light-on-dark QR linking to the project repo.
-function drawQr(ctx, x, y, size) {
+export function drawQr(ctx, x, y, size) {
   const qr = qrcode(0, 'L');
   qr.addData(REPO_URL);
   qr.make();
@@ -23,7 +23,7 @@ function drawQr(ctx, x, y, size) {
   ctx.restore();
 }
 
-function wrapLines(ctx, text, maxWidth) {
+export function wrapLines(ctx, text, maxWidth) {
   const words = String(text).replace(/\s+/g, ' ').trim().split(' ');
   const lines = [];
   let cur = '';
@@ -36,7 +36,7 @@ function wrapLines(ctx, text, maxWidth) {
   return lines;
 }
 
-function loadImage(src) {
+export function loadImage(src) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -46,7 +46,7 @@ function loadImage(src) {
   });
 }
 
-function roundRect(ctx, x, y, w, h, r) {
+export function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
