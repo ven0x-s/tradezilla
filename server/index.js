@@ -241,7 +241,7 @@ app.delete('/api/propfirms/:firmId/accounts/:accId', (req, res) => {
 // ---- CSV export ----
 const CSV_COLUMNS = [
   'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'exits', 'contracts',
-  'stopLoss', 'takeProfit', 'pointValue', 'commissions', 'resultPoints',
+  'stopLoss', 'takeProfit', 'pointValue', 'commissions', 'pnlOverride', 'resultPoints',
   'resultDollars', 'riskDollars', 'rMultiple', 'holdingMinutes', 'setup', 'model',
   'entryModel', 'htfDelivery', 'newsEvent', 'grade', 'emotionEntry', 'emotionExit', 'mistake',
   'emotion', 'mistakes', 'rating', 'planFollowed', 'session', 'notes',
@@ -339,6 +339,7 @@ app.post('/api/import/csv', (req, res) => {
     takeProfit: o.takeProfit ?? o.target ?? o.Target ?? '',
     pointValue: o.pointValue ?? '',
     commissions: o.commissions ?? o.Commissions ?? o.fees ?? '',
+    pnlOverride: o.pnlOverride ?? o['Manual P&L'] ?? '',
     setup: o.setup ?? o.Setup ?? o.strategy ?? '',
     model: o.model ?? o.Model ?? '',
     entryModel: o.entryModel ?? o.EntryModel ?? o['Entry model'] ?? '',

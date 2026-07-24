@@ -2,36 +2,7 @@ import React from 'react';
 import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts';
-import { groupStats, biasSplit, fmtUSD, fmtNum, pnlClass, WEEKDAYS, weekdayOf, hourOf } from '../helpers.js';
-
-function BiasCard({ title, stats, n, tone }) {
-  return (
-    <div className={'card insight ' + tone}>
-      <h3>{title} ({n} trades)</h3>
-      <div className="acct-stats">
-        <div><span>Win rate</span><b>{fmtNum(stats.winRate, 1)}%</b></div>
-        <div><span>P&L</span><b className={pnlClass(stats.totalPnl)}>{fmtUSD(stats.totalPnl)}</b></div>
-        <div><span>Expectancy</span><b className={pnlClass(stats.expectancy)}>{fmtUSD(stats.expectancy)}</b></div>
-        <div><span>Profit factor</span><b>{stats.profitFactor === Infinity ? '∞' : fmtNum(stats.profitFactor, 2)}</b></div>
-        <div><span>Avg R</span><b className={pnlClass(stats.avgR)}>{stats.avgR == null ? '-' : fmtNum(stats.avgR, 2)}</b></div>
-        <div><span>Avg win / loss</span><b>{fmtUSD(stats.avgWin)} / {fmtUSD(stats.avgLoss)}</b></div>
-      </div>
-    </div>
-  );
-}
-
-function HtfBiasComparison({ trades }) {
-  const { withStats, againstStats, withN, againstN } = biasSplit(trades);
-  if (!withN && !againstN) {
-    return <div className="card hint">Set a Daily bias on trades to compare with-bias vs against-bias performance.</div>;
-  }
-  return (
-    <div className="bias-compare">
-      <BiasCard title="With HTF bias" stats={withStats} n={withN} tone="good" />
-      <BiasCard title="Against HTF bias" stats={againstStats} n={againstN} tone="bad" />
-    </div>
-  );
-}
+import { groupStats, fmtUSD, fmtNum, pnlClass, WEEKDAYS, weekdayOf, hourOf } from '../helpers.js';
 
 function Table({ title, rows }) {
   if (!rows.length) return null;
@@ -118,9 +89,6 @@ export default function AnalysisView({ trades, playbooks = [] }) {
 
   return (
     <div>
-      <div className="section-title">HTF bias: with vs against</div>
-      <HtfBiasComparison trades={trades} />
-
       <Table title="By symbol" rows={groupStats(trades, (t) => t.symbol)} />
       <Table title="By setup" rows={groupStats(trades, (t) => t.setup)} />
       <Table title="By model" rows={groupStats(trades, (t) => t.model)} />
@@ -132,8 +100,6 @@ export default function AnalysisView({ trades, playbooks = [] }) {
       <Table title="By account type" rows={groupStats(trades, (t) => t.accountType)} />
       <Table title="By playbook" rows={groupStats(trades, (t) => pbName(t.playbookId))} />
       <Table title="By prop firm" rows={groupStats(trades, (t) => t.propFirm)} />
-      <Table title="By daily bias" rows={groupStats(trades, (t) => t.dailyBias)} />
-      <Table title="By PO3 phase" rows={groupStats(trades, (t) => t.po3)} />
 
       <div className="section-title">Holding time vs profitability</div>
       <HoldingTimeChart trades={trades} />

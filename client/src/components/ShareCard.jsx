@@ -175,7 +175,7 @@ async function draw(canvas, t, o) {
 
   // tag row
   if (o.tags) {
-    const tags = [t.setup, t.model, t.entryModel, t.htfDelivery, t.newsEvent].filter(Boolean);
+    const tags = [t.setup, t.model, t.entryModel, t.newsEvent].filter(Boolean);
     let tx = 40;
     ctx.font = '600 15px Arial';
     for (const tag of tags) {

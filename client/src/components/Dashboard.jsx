@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
-import { computeStats, equitySeries, maxDrawdown, groupStats, accountTypesPresent, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
+import { computeStats, equitySeries, maxDrawdown, accountTypesPresent, fmtUSD, fmtNum, pnlClass } from '../helpers.js';
 import SetupPerformance from './SetupPerformance.jsx';
 import AccountCompare from './AccountCompare.jsx';
 
@@ -29,7 +29,6 @@ export default function Dashboard({ trades }) {
   const eq = equitySeries(view);
   const pf = s.profitFactor === Infinity ? '∞' : fmtNum(s.profitFactor, 2);
   const maxDd = maxDrawdown(eq);
-  const po3Rows = groupStats(view, (t) => t.po3);
 
   return (
     <div>
@@ -107,30 +106,6 @@ export default function Dashboard({ trades }) {
 
       <div className="section-title">Setup performance</div>
       <SetupPerformance trades={view} />
-
-      {po3Rows.length > 0 && (
-        <>
-          <div className="section-title">PO3 phase</div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Phase</th><th className="num">Trades</th><th className="num">Win %</th><th className="num">P&L</th><th className="num">Avg R</th></tr>
-              </thead>
-              <tbody>
-                {po3Rows.map((r) => (
-                  <tr key={r.key}>
-                    <td><span className="tag">{r.key}</span></td>
-                    <td className="num">{r.count}</td>
-                    <td className="num">{fmtNum(r.winRate, 1)}%</td>
-                    <td className={'num ' + pnlClass(r.totalPnl)}>{fmtUSD(r.totalPnl)}</td>
-                    <td className={'num ' + pnlClass(r.avgR)}>{r.avgR == null ? '-' : fmtNum(r.avgR, 2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
     </div>
   );
 }

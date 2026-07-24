@@ -32,7 +32,7 @@ const TABS = [
   ['data', 'Data'],
 ];
 
-const emptyFilters = { symbol: '', setup: '', model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '', accountType: '', playbook: '', session: '', direction: '', from: '', to: '' };
+const emptyFilters = { symbol: '', setup: '', model: '', entryModel: '', newsEvent: '', grade: '', accountType: '', playbook: '', session: '', direction: '', from: '', to: '' };
 
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -138,7 +138,6 @@ export default function App() {
     if (filters.setup && t.setup !== filters.setup) return false;
     if (filters.model && t.model !== filters.model) return false;
     if (filters.entryModel && t.entryModel !== filters.entryModel) return false;
-    if (filters.htfDelivery && t.htfDelivery !== filters.htfDelivery) return false;
     if (filters.newsEvent && t.newsEvent !== filters.newsEvent) return false;
     if (filters.grade && t.grade !== filters.grade) return false;
     if (filters.accountType && t.accountType !== filters.accountType) return false;

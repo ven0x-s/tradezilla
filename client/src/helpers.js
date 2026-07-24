@@ -115,6 +115,9 @@ export function previewMetrics(t) {
     points = +(dir * (exit - entry)).toFixed(4);
     dollars = +(points * pv * contracts - comm).toFixed(2);
   }
+  // Manual P&L override replaces the computed dollars (mirrors server computeMetrics).
+  const override = n(t.pnlOverride);
+  if (override != null) dollars = override;
   if (stop != null && entry != null && contracts > 0) {
     risk = Math.abs(entry - stop) * pv * contracts;
     if (risk > 0 && dollars != null) r = +(dollars / risk).toFixed(2);
@@ -240,7 +243,7 @@ export const ICT_SETUPS = [
 ];
 export const DAILY_BIAS = ['Bullish', 'Bearish', 'Neutral'];
 export const HTF_PDA = ['Premium', 'Discount', 'Equilibrium'];
-export const DRAW_ON_LIQUIDITY = ['PDH', 'PDL', 'PWH', 'PWL', 'Weekly open', 'Monthly open'];
+export const DRAW_ON_LIQUIDITY = ['PDH', 'PDL', 'PWH', 'PWL', 'Weekly open', 'Monthly open', 'Session liquidity', 'PDA array', 'REH', 'REL'];
 export const PO3_PHASES = ['Accumulation', 'Manipulation', 'Distribution'];
 export const ACCOUNT_TYPES = ['Eval', 'Funded', 'Demo Funded', 'Live'];
 
@@ -272,7 +275,7 @@ export function isTradingViewUrl(url) {
   }
 }
 
-export const APP_VERSION = '2.5.0';
+export const APP_VERSION = '2.6.0';
 
 // Per setup-tag stats. A trade with multiple tags counts toward each of them.
 export function setupTagStats(trades) {

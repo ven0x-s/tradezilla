@@ -74,6 +74,12 @@ function computeMetrics(t) {
     resultDollars = +(grossDollars - commissions).toFixed(2);
   }
 
+  // Manual P&L override: the point×value×contracts math doesn't fit every
+  // instrument (e.g. crypto), so a trade can carry a hand-entered net P&L
+  // that replaces the computed dollars. Points stay as-is for reference.
+  const override = num(t.pnlOverride);
+  if (override != null) resultDollars = +override.toFixed(2);
+
   let riskDollars = null, rMultiple = null;
   const stop = num(t.stopLoss);
   if (stop != null && entry != null && contracts > 0) {
@@ -113,7 +119,7 @@ function decorate(t) {
 
 const FIELDS = [
   'date', 'time', 'exitTime', 'symbol', 'direction', 'entry', 'exit', 'exits', 'contracts',
-  'stopLoss', 'takeProfit', 'commissions', 'pointValue', 'setup',
+  'stopLoss', 'takeProfit', 'commissions', 'pointValue', 'pnlOverride', 'setup',
   'model', 'entryModel', 'htfDelivery', 'newsEvent', 'grade',
   'emotionEntry', 'emotionExit', 'mistake',
   'session', 'notes', 'source', 'sourceId',

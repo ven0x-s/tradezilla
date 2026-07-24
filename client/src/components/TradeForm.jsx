@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { api } from '../api.js';
 import {
   previewMetrics, defaultPointValue, fmtUSD, fmtR, fmtNum, SESSIONS, EMOTIONS, todayISO,
-  ICT_SETUPS, DAILY_BIAS, HTF_PDA, DRAW_ON_LIQUIDITY, PO3_PHASES, ACCOUNT_TYPES,
+  ICT_SETUPS, DRAW_ON_LIQUIDITY, ACCOUNT_TYPES,
   isTradingViewUrl, setupTagsOf,
 } from '../helpers.js';
 
@@ -12,6 +12,18 @@ function loadCustomSetups() {
 }
 function saveCustomSetups(list) {
   try { localStorage.setItem(CUSTOM_SETUPS_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+}
+
+// Custom assets (e.g. BTC, ETH) with their own $/point, remembered in localStorage.
+const CUSTOM_ASSETS_KEY = 'pug_custom_assets';
+function loadCustomAssets() {
+  try {
+    const list = JSON.parse(localStorage.getItem(CUSTOM_ASSETS_KEY)) || [];
+    return Array.isArray(list) ? list.filter((a) => a && a.symbol) : [];
+  } catch { return []; }
+}
+function saveCustomAssets(list) {
+  try { localStorage.setItem(CUSTOM_ASSETS_KEY, JSON.stringify(list)); } catch { /* ignore */ }
 }
 
 const QUICK_SYMBOLS = ['NQ', 'ES', 'MNQ', 'MES'];
@@ -55,11 +67,11 @@ function ChoiceField({ label, value, options, onChange, placeholder, full }) {
 const blank = () => ({
   date: todayISO(), time: '', exitTime: '', symbol: 'NQ', direction: 'long',
   entry: '', exit: '', exits: [], contracts: '1', stopLoss: '', takeProfit: '',
-  pointValue: String(defaultPointValue('NQ')), commissions: '', setup: '',
-  model: '', entryModel: '', htfDelivery: '', newsEvent: '', grade: '',
+  pointValue: String(defaultPointValue('NQ')), commissions: '', pnlOverride: '', setup: '',
+  model: '', entryModel: '', newsEvent: '', grade: '',
   emotionEntry: '', emotionExit: '', mistake: '',
   session: 'NY', notes: '', rating: '', planFollowed: false, emotion: '', mistakes: '',
-  setupTags: [], dailyBias: '', htfPda: '', drawOnLiquidity: '', narrative: '', po3: '',
+  setupTags: [], drawOnLiquidity: '', narrative: '',
   tvUrl: '', accountType: '', propFirm: '', playbookId: '', rulesFollowed: true, ruleBroken: '', accountId: '',
   screenshots: [],
 });
@@ -115,10 +127,32 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
   const saveRef = useRef();
   const isEditing = !!form.id;
 
+  const [customAssets, setCustomAssets] = useState(() => loadCustomAssets());
+  const [newAsset, setNewAsset] = useState('');
+  const [newAssetPv, setNewAssetPv] = useState('');
+  const [adjustOpen, setAdjustOpen] = useState(false);
+
   const preview = useMemo(() => previewMetrics(form), [form]);
   const tvValid = isTradingViewUrl(form.tvUrl);
   const exits = Array.isArray(form.exits) ? form.exits : [];
   const hasPartials = exits.some((p) => p.qty !== '' || p.price !== '');
+  const allSymbols = [...QUICK_SYMBOLS, ...customAssets.map((a) => a.symbol).filter((s) => !QUICK_SYMBOLS.includes(s))];
+
+  // Point value for a symbol: custom asset override, else the built-in default.
+  const pvFor = (sym) => {
+    const a = customAssets.find((x) => x.symbol === String(sym || '').toUpperCase());
+    return a ? a.pointValue : defaultPointValue(sym);
+  };
+
+  function addAsset() {
+    const sym = newAsset.trim().toUpperCase();
+    if (!sym) return notify('Enter an asset symbol');
+    const pv = Number(newAssetPv) || defaultPointValue(sym);
+    const next = [...customAssets.filter((a) => a.symbol !== sym), { symbol: sym, pointValue: pv }];
+    setCustomAssets(next); saveCustomAssets(next);
+    setNewAsset(''); setNewAssetPv('');
+    setForm((f) => ({ ...f, symbol: sym, pointValue: String(pv) }));
+  }
 
   function setExit(i, k, v) {
     setForm((f) => ({ ...f, exits: f.exits.map((p, j) => (j === i ? { ...p, [k]: v } : p)) }));
@@ -151,8 +185,8 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
   function set(k, v) {
     setForm((f) => {
       const next = { ...f, [k]: v };
-      if (k === 'symbol' && (!f.pointValue || f.pointValue === String(defaultPointValue(f.symbol)))) {
-        next.pointValue = String(defaultPointValue(v));
+      if (k === 'symbol' && (!f.pointValue || f.pointValue === String(pvFor(f.symbol)))) {
+        next.pointValue = String(pvFor(v));
       }
       return next;
     });
@@ -237,12 +271,25 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
 
             <div className="field">
               <label>Symbol</label>
-              <div className="seg" style={{ marginBottom: 6 }}>
-                {QUICK_SYMBOLS.map((s) => (
+              <div className="seg" style={{ marginBottom: 6, flexWrap: 'wrap' }}>
+                {allSymbols.map((s) => (
                   <button key={s} className={form.symbol === s ? 'active' : ''} type="button" onClick={() => set('symbol', s)}>{s}</button>
                 ))}
               </div>
               <input value={form.symbol || ''} onChange={(e) => set('symbol', e.target.value.toUpperCase())} placeholder="Other symbol" />
+              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                <input
+                  value={newAsset} onChange={(e) => setNewAsset(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAsset(); } }}
+                  placeholder="New asset (e.g. BTC)" style={{ flex: 1, minWidth: 0 }}
+                />
+                <input
+                  type="number" step="any" value={newAssetPv} onChange={(e) => setNewAssetPv(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAsset(); } }}
+                  placeholder="$/pt" style={{ width: 70 }}
+                />
+                <button type="button" className="btn ghost" onClick={addAsset}>+ Add</button>
+              </div>
             </div>
             <div className="field">
               <label>Direction</label>
@@ -319,17 +366,13 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
               <label>Setup / strategy</label>
               <input value={form.setup || ''} onChange={(e) => set('setup', e.target.value)} placeholder="e.g. ORB, Reversal" />
             </div>
-            <div className="field">
-              <label>Model</label>
-              <input value={form.model || ''} onChange={(e) => set('model', e.target.value)} placeholder="e.g. 2022 model, Silver Bullet" />
-            </div>
+            <ChoiceField
+              label="Model (playbook)" value={form.model} options={playbooks.map((p) => p.name)}
+              onChange={(v) => set('model', v)} placeholder="Custom model"
+            />
             <div className="field">
               <label>Entry model</label>
               <input value={form.entryModel || ''} onChange={(e) => set('entryModel', e.target.value)} placeholder="e.g. FVG, OTE, Breaker" />
-            </div>
-            <div className="field">
-              <label>HTF delivery</label>
-              <input value={form.htfDelivery || ''} onChange={(e) => set('htfDelivery', e.target.value)} placeholder="e.g. bullish, bearish" />
             </div>
             <div className="field">
               <label>Grade</label>
@@ -370,29 +413,8 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
               <input value={form.mistakes || ''} onChange={(e) => set('mistakes', e.target.value)} placeholder="e.g. moved stop, chased entry" />
             </div>
 
-            <div className="field full"><div className="form-section">ICT setup &amp; HTF context</div></div>
+            <div className="field full"><div className="form-section">ICT setup &amp; context</div></div>
             <SetupTagsField value={form.setupTags} onChange={(v) => set('setupTags', v)} tagRefs={tagRefs} />
-            <div className="field">
-              <label>Daily bias</label>
-              <select value={form.dailyBias || ''} onChange={(e) => set('dailyBias', e.target.value)}>
-                <option value="">-</option>
-                {DAILY_BIAS.map((b) => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label>HTF PDA</label>
-              <select value={form.htfPda || ''} onChange={(e) => set('htfPda', e.target.value)}>
-                <option value="">-</option>
-                {HTF_PDA.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label>PO3 phase</label>
-              <select value={form.po3 || ''} onChange={(e) => set('po3', e.target.value)}>
-                <option value="">-</option>
-                {PO3_PHASES.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
             <ChoiceField
               label="Draw on liquidity" value={form.drawOnLiquidity} options={DRAW_ON_LIQUIDITY}
               onChange={(v) => set('drawOnLiquidity', v)} placeholder="Custom target"
@@ -470,10 +492,26 @@ export default function TradeForm({ trade, playbooks = [], propfirms = [], onClo
 
           <div className="computed" style={{ marginTop: 16 }}>
             <div><span>Result (points)</span><b className={cls(preview.points)}>{fmtNum(preview.points)}</b></div>
-            <div><span>Result ($)</span><b className={cls(preview.dollars)}>{fmtUSD(preview.dollars)}</b></div>
+            <div><span>Result ($){form.pnlOverride !== '' && form.pnlOverride != null ? ' · manual' : ''}</span><b className={cls(preview.dollars)}>{fmtUSD(preview.dollars)}</b></div>
             <div><span>Risk ($)</span><b>{preview.risk == null ? '-' : fmtUSD(preview.risk)}</b></div>
             <div><span>R multiple</span><b className={cls(preview.r)}>{fmtR(preview.r)}</b></div>
           </div>
+
+          {adjustOpen || (form.pnlOverride !== '' && form.pnlOverride != null) ? (
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <label className="hint" style={{ margin: 0 }}>Manual P&amp;L ($)</label>
+              <input
+                type="number" step="any" value={form.pnlOverride || ''} style={{ width: 150 }}
+                onChange={(e) => set('pnlOverride', e.target.value)} placeholder="e.g. 123.45" autoFocus
+              />
+              <button type="button" className="btn ghost" onClick={() => { set('pnlOverride', ''); setAdjustOpen(false); }}>Clear</button>
+              <span className="hint">Overrides the computed P&amp;L for this trade (use for crypto or corrections).</span>
+            </div>
+          ) : (
+            <div style={{ marginTop: 10 }}>
+              <button type="button" className="btn ghost" onClick={() => setAdjustOpen(true)}>Adjust trade log P&amp;L…</button>
+            </div>
+          )}
 
           <div style={{ marginTop: 18 }}>
             <label className="hint">Screenshots (charts for entry / exit)</label>
@@ -513,7 +551,7 @@ const cls = (n) => (n == null ? '' : n > 0 ? 'pos' : n < 0 ? 'neg' : '');
 
 function normalize(t) {
   const o = { ...t };
-  ['entry', 'exit', 'contracts', 'stopLoss', 'takeProfit', 'pointValue', 'commissions'].forEach((k) => {
+  ['entry', 'exit', 'contracts', 'stopLoss', 'takeProfit', 'pointValue', 'commissions', 'pnlOverride'].forEach((k) => {
     o[k] = t[k] == null ? '' : String(t[k]);
   });
   o.screenshots = t.screenshots || [];

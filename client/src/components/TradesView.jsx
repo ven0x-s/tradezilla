@@ -6,7 +6,7 @@ const COLS = [
   ['entry', 'Entry'], ['exit', 'Exit'], ['contracts', 'Qty'],
   ['resultPoints', 'Pts'], ['resultDollars', 'P&L'], ['rMultiple', 'R'],
   ['setup', 'Setup'], ['model', 'Model'], ['entryModel', 'Entry model'],
-  ['htfDelivery', 'HTF delivery'], ['newsEvent', 'News'], ['grade', 'Grade'],
+  ['newsEvent', 'News'], ['grade', 'Grade'],
   ['emotionEntry', 'Emotion in'], ['emotionExit', 'Emotion out'], ['mistake', 'Mistake'],
   ['accountType', 'Account'], ['playbookId', 'Playbook'], ['session', 'Session'],
 ];
@@ -65,7 +65,6 @@ export default function TradesView({ trades, playbooks = [], onEdit, onDelete, o
               <td>{t.setup ? <span className="tag">{t.setup}</span> : '-'}</td>
               <td>{t.model || '-'}</td>
               <td>{t.entryModel || '-'}</td>
-              <td>{t.htfDelivery || '-'}</td>
               <td>{t.newsEvent ? <span className="tag news">{t.newsEvent}</span> : '-'}</td>
               <td>{t.grade ? <span className="tag grade">{t.grade}</span> : '-'}</td>
               <td>{t.emotionEntry || '-'}</td>
